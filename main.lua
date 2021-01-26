@@ -14,8 +14,46 @@ function QuickApp:onInit()
         })
     end
 
-    self:loop(30)
+    self.sensorsMap = {}
+
+    self:initChildDevices({
+        ["com.fibaro.multilevelSensor"] = AirQualitySensor
+    })
+    self:initChildDevices()
+    self:createMissingSensors()
+    --self:loop(30)
+    -- self:updateProperty('manufacturer', "LookO2")
 end
+
+
+function QuickApp:createChild(sensorLabel)
+    local child = self:createChildDevice({
+        name = sensorLabel,
+        type = "com.fibaro.multilevelSensor",
+    }, AirQualitySensor)
+
+    self:trace("[LookO2][createChild] Device for ", sensorLabel, " sensor created under ID ", child.id)
+    return child
+end
+
+
+function QuickApp:createMissingSensors()
+    for i, name in ipairs({"PM1", "PM2.5", "PM10"}) do
+        if self.sensorsMap[name] == nil then
+
+          self:debug("[LookO2][createMissingSensors] ",name, " is missing, creating ")
+          self.sensorsMap[name] = self:createChild(name)
+        end
+    end
+end
+
+function QuickApp:initChildDevices()
+    for id,device in pairs(self.childDevices) do
+        self.sensorsMap[device.name] = id
+        self:debug("[LookO2][initChildDevices] Found ", device.name, " sensor under device ID ", id, " (type: ", device.type, ")")
+    end
+end
+
 
 function QuickApp:loop(minutes)
     -- re-run after 30 minutes
@@ -29,7 +67,7 @@ end
 
 
 function QuickApp:reloadDeviceData(metric)
-    self:debug("[LookO2] Reload device data. Picked Metric: ", metric)
+    self:debug("[LookO2][reloadDeviceData] Picked Metric: ", metric)
     self.looko2Client:getLastSensorMesurement(
         self:getVariable("DEVICE_ID"),
         function(response)
@@ -89,4 +127,14 @@ end
 function QuickApp:onButtonPM1Click(event)
     self:updatePickedMetric("PM1")
     self:reloadDeviceData("PM1")
+end
+
+function QuickApp:initializeChildren()
+    self.builder:initChildren({
+        [OWSensor.class] = OWSensor,
+        [OWTemperature.class] = OWTemperature,
+        [OWWind.class] = OWWind,
+        [OWHumidity.class] = OWHumidity,
+        [OWRain.class] = OWRain,
+    })
 end
