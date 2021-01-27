@@ -19,12 +19,11 @@ function QuickApp:onInit()
     self:initChildDevices({
         ["com.fibaro.multilevelSensor"] = AirQualitySensor
     })
-    self:initChildDevices()
+    self:initializeChildDevices()
     self:createMissingSensors()
     --self:loop(30)
     -- self:updateProperty('manufacturer', "LookO2")
 end
-
 
 function QuickApp:createChild(sensorLabel)
     local child = self:createChildDevice({
@@ -36,6 +35,10 @@ function QuickApp:createChild(sensorLabel)
     return child
 end
 
+function QuickApp:getChildDevice(sensorLabel)
+    local deviceId = self.sensorsMap[sensorLabel]
+    return self.childDevices[deviceId]
+end
 
 function QuickApp:createMissingSensors()
     for i, name in ipairs({"PM1", "PM2.5", "PM10"}) do
@@ -47,7 +50,7 @@ function QuickApp:createMissingSensors()
     end
 end
 
-function QuickApp:initChildDevices()
+function QuickApp:initializeChildDevices()
     for id,device in pairs(self.childDevices) do
         self.sensorsMap[device.name] = id
         self:debug("[LookO2][initChildDevices] Found ", device.name, " sensor under device ID ", id, " (type: ", device.type, ")")
@@ -72,18 +75,9 @@ function QuickApp:reloadDeviceData(metric)
         self:getVariable("DEVICE_ID"),
         function(response)
             self:debug("[LookO2] Got API response", response)
-
-            self:updateProperty("unit", metric)
-            if (metric == "PM2.5") then
-                self:updateProperty("value", tonumber(response.PM25))
-            elseif (metric == "PM10") then
-                self:updateProperty("value", tonumber(response.PM10))
-            elseif (metric == "PM1") then
-                self:updateProperty("value", tonumber(response.PM1))
-            else
-                self:updateProperty("value", tonumber(response.PM25))
-                self:updateProperty("unit", "PM2.5")
-            end
+            self:getChildDevice("PM2.5"):updateProperty("value", tonumber(response.PM25))
+            self:getChildDevice("PM10"):updateProperty("value", tonumber(response.PM10))
+            self:getChildDevice("PM1"):updateProperty("value", tonumber(response.PM1))
         end,
         function(message)
             self:debug("[LookO2] error:", message)
