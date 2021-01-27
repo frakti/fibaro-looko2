@@ -15,8 +15,9 @@ Current version is not yet ready to be published. Firstly would like to cover:
 
 - [X] Basic app with periodic API pooling and Fibaro device value update
 - [ ] Cache previous LookO2 response with TTL 30 minutes (based on `Epoch` from previous response)
-- [ ] Create children devices of all desired metrics
-- [ ] Pick nearest LookO2 device based location defined in HC settings
+- [X] Create children devices of all desired metrics
+- [ ] Clean the code
+- [ ] (Nice to have) Notify about nearest LookO2 device based location defined in HC settings
 - [ ] Add some examples of Scenes using this Quick App
 - [ ] Prepare polish docs version
 - [ ] Prepare first release
