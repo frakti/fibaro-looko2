@@ -1,4 +1,6 @@
 function QuickApp:onInit()
+    self.lastSuccessResponse = {}
+
     self:debug("[LookO2] Init quick app")
     QuickApp.looko2Client = ApiClient:new(self:getVariable("API_TOKEN"))
 
@@ -20,7 +22,7 @@ function QuickApp:onInit()
     })
     self:initializeChildDevices()
     self:createMissingSensors()
-    self:loop(30)
+    self:loop()
     -- self:updateProperty('manufacturer', "LookO2")
 end
 
@@ -57,39 +59,50 @@ function QuickApp:initializeChildDevices()
 end
 
 
-function QuickApp:loop(minutes)
-    -- re-run after 30 minutes
-    fibaro.setTimeout(minutes * 60 * 1000, function()
+
+function QuickApp:loop()
+  function scheduleNextReload(response)
+    local nextRefreshAfter = 1800 - (os.time() - tonumber(response.Epoch)) -- seconds
+    if nextRefreshAfter < 0 then
+      nextRefreshAfter = 1800 -- TODO count occurences, high value suggests sensor might not be responding for some time
+    end
+    self:debug("[LookO2] Scheduling next data raload afer ",  nextRefreshAfter, " seconds")
+
+    fibaro.setTimeout(nextRefreshAfter * 1000, function()
         self:loop()
     end)
+  end
 
-    local settings = json.decode(api.get('/globalVariables/looko2').value)
-    self:reloadDeviceData(settings)
+  self:reloadDeviceData(scheduleNextReload)
 end
 
 
-function QuickApp:reloadDeviceData(settings)
+function QuickApp:reloadDeviceData(callback)
     self:debug("[LookO2][reloadDeviceData] Triggered")
     self.looko2Client:getLastSensorMesurement(
         self:getVariable("DEVICE_ID"),
         function(response)
             self:debug("[LookO2] Got API response", response)
+            self.lastSuccessResponse = response
             self:getChildDevice("PM2.5"):updateProperty("value", tonumber(response.PM25))
             self:getChildDevice("PM10"):updateProperty("value", tonumber(response.PM10))
             self:getChildDevice("PM1"):updateProperty("value", tonumber(response.PM1))
-
             self:updateView(
                 "updated_at", "text",
                 "Server data: " .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
                 "Last refresh at: " .. os.date("%Y-%m-%d %X")
             )
+            callback(response)
         end,
         function(message)
             self:debug("[LookO2] error:", message)
+            callback({ Epoch = os.time() })
         end
     )
 end
 
 function QuickApp:onRefreshClick(event)
-    self:reloadDeviceData()
+    self:reloadDeviceData(
+    function () end
+  )
 end
