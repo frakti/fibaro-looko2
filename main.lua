@@ -78,6 +78,16 @@ end
 
 
 function QuickApp:reloadDeviceData(callback)
+  local icons = {
+    not_available = "💤",
+    very_good = "🔵",
+    good = "🟢",
+    moderate = "🟡",
+    satisfactory = "🟠",
+    bad = "🔴",
+    hazardous = "🟣"
+  }
+
     self:debug("[LookO2][reloadDeviceData] Triggered")
     self.looko2Client:getLastSensorMesurement(
         self:getVariable("DEVICE_ID"),
@@ -87,6 +97,31 @@ function QuickApp:reloadDeviceData(callback)
             self:getChildDevice("PM2.5"):updateProperty("value", tonumber(response.PM25))
             self:getChildDevice("PM10"):updateProperty("value", tonumber(response.PM10))
             self:getChildDevice("PM1"):updateProperty("value", tonumber(response.PM1))
+
+            local airQualityIndex = tonumber(response.IJP)
+            if (airQualityIndex == 0) then
+              pickedIcon = icons.very_good
+            elseif (airQualityIndex <= 2) then
+              pickedIcon = icons.good
+            elseif (airQualityIndex <= 4) then
+              pickedIcon = icons.moderate
+            elseif (airQualityIndex <= 6) then
+              pickedIcon = icons.satisfactory
+            elseif (airQualityIndex <= 9) then
+              pickedIcon = icons.bad
+            else
+              pickedIcon = icons.hazardous
+            end
+
+            local indexChange = tonumber(response.PreviousIJP) - tonumber(response.IJP);
+            local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
+            local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
+
+            local sensorsLog = pickedIcon .. " " .. response.IJPStringEN .. increaseIcon .. decreaseIcon
+            self:getChildDevice("PM2.5"):updateProperty("log", sensorsLog)
+            self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
+            self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
+
             self:updateView(
                 "updated_at", "text",
                 "Server data: " .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
