@@ -77,6 +77,12 @@ function QuickApp:reloadDeviceData(settings)
             self:getChildDevice("PM2.5"):updateProperty("value", tonumber(response.PM25))
             self:getChildDevice("PM10"):updateProperty("value", tonumber(response.PM10))
             self:getChildDevice("PM1"):updateProperty("value", tonumber(response.PM1))
+
+            self:updateView(
+                "updated_at", "text",
+                "Server data: " .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
+                "Last refresh at: " .. os.date("%Y-%m-%d %X")
+            )
         end,
         function(message)
             self:debug("[LookO2] error:", message)
