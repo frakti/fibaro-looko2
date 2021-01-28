@@ -1,4 +1,6 @@
 function QuickApp:onInit()
+    QuickApp.i18n = i18n:new()
+
     self.lastSuccessResponse = {}
 
     self:debug("[LookO2] Init quick app")

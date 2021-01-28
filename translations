@@ -1,0 +1,8 @@
+translations = {
+  pl = {
+    ['name'] = 'LookO2 - Czujniki Jakości Powietrza',
+  },
+  en = {
+    ['name'] = 'LookO2 - Air Quality Sensors',
+  }
+}
