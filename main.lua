@@ -8,8 +8,7 @@ function QuickApp:onInit()
         api.post('/globalVariables', {
             name = 'looko2',
             value = json.encode({
-                schema_version = 1,
-                picked_metric = "PM2.5"
+                schema_version = 1
             })
         })
     end
@@ -21,7 +20,7 @@ function QuickApp:onInit()
     })
     self:initializeChildDevices()
     self:createMissingSensors()
-    --self:loop(30)
+    self:loop(30)
     -- self:updateProperty('manufacturer', "LookO2")
 end
 
@@ -65,12 +64,12 @@ function QuickApp:loop(minutes)
     end)
 
     local settings = json.decode(api.get('/globalVariables/looko2').value)
-    self:reloadDeviceData(settings.picked_metric)
+    self:reloadDeviceData(settings)
 end
 
 
-function QuickApp:reloadDeviceData(metric)
-    self:debug("[LookO2][reloadDeviceData] Picked Metric: ", metric)
+function QuickApp:reloadDeviceData(settings)
+    self:debug("[LookO2][reloadDeviceData] Triggered")
     self.looko2Client:getLastSensorMesurement(
         self:getVariable("DEVICE_ID"),
         function(response)
@@ -85,50 +84,6 @@ function QuickApp:reloadDeviceData(metric)
     )
 end
 
-function QuickApp:updatePickedMetric(metric)
-    self:debug("[LookO2] Update settings. Picked Metric: ", metric)
-
-    self:updateView("buttonPM1", "text", "PM1 [ ]")
-    self:updateView("buttonPM25", "text", "PM25 [ ]")
-    self:updateView("buttonPM10", "text", "PM10 [ ]")
-
-    if (metric == "PM1") then
-        self:updateView("buttonPM1", "text", "PM1 [X]")
-    elseif (metric == "PM2.5") then
-        self:updateView("buttonPM25", "text", "PM25 [X]")
-    elseif (metric == "PM10") then
-        self:updateView("buttonPM10", "text", "PM10 [X]")
-    end
-
-    local response = api.put('/globalVariables/looko2', {
-        value = json.encode({
-            schema_version = 1,
-            picked_metric = metric
-        })
-    })
-end
-
-function QuickApp:onButtonPM25Click(event)
-    self:updatePickedMetric("PM2.5")
-    self:reloadDeviceData("PM2.5")
-end
-
-function QuickApp:onButtonPM10Click(event)
-    self:updatePickedMetric("PM10")
-    self:reloadDeviceData("PM10")
-end
-
-function QuickApp:onButtonPM1Click(event)
-    self:updatePickedMetric("PM1")
-    self:reloadDeviceData("PM1")
-end
-
-function QuickApp:initializeChildren()
-    self.builder:initChildren({
-        [OWSensor.class] = OWSensor,
-        [OWTemperature.class] = OWTemperature,
-        [OWWind.class] = OWWind,
-        [OWHumidity.class] = OWHumidity,
-        [OWRain.class] = OWRain,
-    })
+function QuickApp:onRefreshClick(event)
+    self:reloadDeviceData()
 end
