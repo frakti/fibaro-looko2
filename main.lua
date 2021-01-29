@@ -30,10 +30,14 @@ function QuickApp:onInit()
 end
 
 function QuickApp:createChild(sensorLabel)
+    local parentRoomId = api.get('/devices/' .. self.id).roomID
     local child = self:createChildDevice({
         name = sensorLabel,
         type = "com.fibaro.multilevelSensor",
     }, AirQualitySensor)
+
+    api.put('/devices/' .. child.id, {roomID = parentRoomId, properties = {}})
+
 
     self:trace("[LookO2][createChild] Device for ", sensorLabel, " sensor created under ID ", child.id)
     return child
