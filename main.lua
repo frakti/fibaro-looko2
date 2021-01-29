@@ -1,5 +1,6 @@
 function QuickApp:onInit()
     QuickApp.i18n = i18n:new()
+    QuickApp.GUI = GUI:new(self, self.i18n)
 
     self.lastSuccessResponse = {}
 
@@ -125,9 +126,10 @@ function QuickApp:reloadDeviceData(callback)
             self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
 
             self:updateView(
-                "updated_at", "text",
-                "Server data: " .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
-                "Last refresh at: " .. os.date("%Y-%m-%d %X")
+                "summary", "text",
+
+                self.i18n:get("last_measurement") .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
+                self.i18n:get("last_refresh") .. os.date("%Y-%m-%d %X")
             )
             callback(response)
         end,
