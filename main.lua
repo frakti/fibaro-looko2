@@ -129,11 +129,13 @@ function QuickApp:reloadDeviceData(callback)
             self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
             self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
 
+            local location = api.get('/settings/location')
             self:updateView(
                 "summary", "text",
 
                 self.i18n:get("last_measurement") .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
-                self.i18n:get("last_refresh") .. os.date("%Y-%m-%d %X")
+                self.i18n:get("last_refresh") .. os.date("%Y-%m-%d %X"),
+                self.i18n:get("picked_sensor_distanse"), geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude)
             )
             callback(response)
         end,
@@ -142,6 +144,24 @@ function QuickApp:reloadDeviceData(callback)
             callback({ Epoch = os.time() })
         end
     )
+end
+
+local function geo_distance(lat1, lon1, lat2, lon2)
+  if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil then
+    return nil
+  end
+  local dlat = math.rad(lat2-lat1)
+  local dlon = math.rad(lon2-lon1)
+  local sin_dlat = math.sin(dlat/2)
+  local sin_dlon = math.sin(dlon/2)
+  local a = sin_dlat * sin_dlat + math.cos(math.rad(lat1)) * math.cos(math.rad(lat2)) * sin_dlon * sin_dlon
+  local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+  -- 6378 km is the earth's radius at the equator.
+  -- 6357 km would be the radius at the poles (earth isn't a perfect circle).
+  -- Thus, high latitude distances will be slightly overestimated
+  -- To get miles, use 3963 as the constant (equator again)
+  local d = 6378 * c
+  return d
 end
 
 function QuickApp:onRefreshClick(event)
