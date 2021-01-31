@@ -3,20 +3,40 @@ translations = {
     ['title'] = 'LookO2 - Czujniki Jakości Powietrza',
     ['refresh_data'] = 'Odśwież dane czujników',
     ['find_nearest_device'] = 'Znajdź najbliższy czujnik',
-    ['last_measurement'] = 'Data ostatniego pomiaru: <font color="green">%s</font>',
-    ['last_refresh'] = 'Data pobrania danych: <font color="green">%s</font>',
+    ['last_collect_summary'] = [[
+      Wybrany czujnik: <font color="green">%s</font> (<font color="green">%.2f km</font> od Twojej lokalizacji).
+      Data pobrania danych z API: <font color="green">%s</font>
+      Data ostatniego odczytu sensora: <font color="green">%s</font>
+
+      Odczyt:
+      - Stężenie PM1: %s ㎍/㎥
+      - Stężenie PM2.5: %s ㎍/㎥ (100 %%)
+      - Stężenie PM10: %s ㎍/㎥ (100 %%)
+      - Temperatura: %s °C
+      - Stan jakości powietrza: %s
+      - Opis: %s
+    ]],
     ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color="green">%s</font>, które jest położone <font color="green">%.2f km</font> od ustawionej lokalizacji.',
-    ['picked_sensor_distanse'] = 'Dystans do wybranego sensora: <font color="green">%.2f km</font>',
     ['version'] = 'Wersja: %s',
   },
   en = {
     ['title'] = 'LookO2 - Air Quality Sensors',
     ['refresh_data'] = 'Refresh sensors data',
     ['find_nearest_device'] = 'Find nearest sensor',
-    ['last_measurement'] = 'Last measurement date: <font color="green">%s</font>',
-    ['last_refresh'] = 'Last fetch at: <font color="green">%s</font>',
+    ['last_collect_summary'] = [[
+      Picked sensor: <font color="green">%s</font> (it's <font color="green">%.2f km</font> from your location).
+      Fetch date from API: <font color="green">%s</font>
+      Last sensor reading date: <font color="green">%s</font>
+
+      Readings:
+      - PM1: %s ㎍/㎥
+      - PM2.5: %s ㎍/㎥ (100 %%)
+      - PM10: %s ㎍/㎥ (100 %%)
+      - Temperature: %s °C
+      - Air quality rating: %s
+      - Description: %s
+    ]],
     ['nearest_sensor_summary'] = 'The nearest device is <font color="green">%s</font> which is <font color="green">%.2f km</font> from location you\'ve defined in HC settings.',
-    ['picked_sensor_distanse'] = 'Distance to picked sensor: <font color="green">%.2f km</font>',
     ['version'] = 'Version: %s',
   }
 }

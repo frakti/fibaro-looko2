@@ -134,10 +134,22 @@ function QuickApp:reloadDeviceData(callback)
             local location = api.get('/settings/location')
             self:updateView(
                 "summary", "text",
-
-                self.i18n:get("last_measurement", os.date("%Y-%m-%d %X", tonumber(response.Epoch))) .. "\n\n" ..
-                self.i18n:get("last_refresh", os.date("%Y-%m-%d %X")) .. "\n" ..
-                self.i18n:get("picked_sensor_distanse", geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude))
+                self.i18n:get(
+                  "last_collect_summary",
+                  self:getVariable("DEVICE_ID"),
+                  geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude),
+                  os.date("%Y-%m-%d %X"),
+                  os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
+                  tonumber(response.PM1),
+                  tonumber(response.PM25),
+                  tonumber(response.PM10),
+                  tonumber(response.Temperature),
+                  pickedIcon .. self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}) .. increaseIcon .. decreaseIcon,
+                  self.i18n:pickByLang({
+                    pl = response.IJPDescription,
+                    en = response.IJPDescriptionEN
+                  })
+                )
             )
             callback(response)
         end,

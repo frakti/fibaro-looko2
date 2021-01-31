@@ -16,3 +16,11 @@ function i18n:get(key, ...)
     end
     return key
 end
+
+function i18n:pickByLang(translations)
+  local pickedTranslation = translations[self.lang]
+  if not pickedTranslation then
+    return translations["en"]
+  end
+  return pickedTranslation
+end
