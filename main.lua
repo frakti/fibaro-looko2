@@ -1,25 +1,10 @@
 function QuickApp:onInit()
+  self:debug("[LookO2] Initializing app")
     QuickApp.i18n = i18n:new()
     QuickApp.GUI = GUI:new(self, self.i18n)
-
-    self.lastSuccessResponse = {}
-
-    self:debug("[LookO2] Init quick app")
+    QuickApp.settings = Settings:new()
     QuickApp.looko2Client = ApiClient:new(self:getVariable("API_TOKEN"))
-
-    local settings = api.get('/globalVariables/looko2')
-    if settings == nil then
-        self:trace("[LookO2] Settings not found, creating with default values")
-        api.post('/globalVariables', {
-            name = 'looko2',
-            value = json.encode({
-                schema_version = 1
-            })
-        })
-    end
-
     self.sensorsMap = {}
-
     self:initChildDevices({
         ["com.fibaro.multilevelSensor"] = AirQualitySensor
     })
@@ -115,7 +100,8 @@ function QuickApp:reloadDeviceData(callback)
         self:getVariable("DEVICE_ID"),
         function(response)
             self:debug("[LookO2] Got API response", response)
-            self.lastSuccessResponse = response
+            self.settings:persist('lastSuccessResponse', response)
+
             self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
             self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
             self:getChildDevice("PM1"):updateValue(tonumber(response.PM1))
