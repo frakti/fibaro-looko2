@@ -116,9 +116,9 @@ function QuickApp:reloadDeviceData(callback)
         function(response)
             self:debug("[LookO2] Got API response", response)
             self.lastSuccessResponse = response
-            self:getChildDevice("PM2.5"):updateProperty("value", tonumber(response.PM25))
-            self:getChildDevice("PM10"):updateProperty("value", tonumber(response.PM10))
-            self:getChildDevice("PM1"):updateProperty("value", tonumber(response.PM1))
+            self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
+            self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
+            self:getChildDevice("PM1"):updateValue(tonumber(response.PM1))
 
             local airQualityIndex = tonumber(response.IJP)
             if (airQualityIndex == 0) then
