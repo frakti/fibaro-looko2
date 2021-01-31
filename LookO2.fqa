@@ -1,1 +1,186 @@
-{"name":"LookO2","type":"com.fibaro.multilevelSensor","apiVersion":"1.2","initialProperties":{"viewLayout":{"$jason":{"body":{"header":{"style":{"height":"0"},"title":"quickApp_device_28"},"sections":{"items":[{"components":[{"name":"label","style":{"weight":"1.2"},"text":"Status: ","type":"label"},{"style":{"weight":"0.5"},"type":"space"}],"style":{"weight":"1.2"},"type":"vertical"},{"components":[{"name":"button1","style":{"weight":"1.2"},"text":"Refresh metrics","type":"button"},{"style":{"weight":"0.5"},"type":"space"}],"style":{"weight":"1.2"},"type":"vertical"},{"components":[{"name":"button2","style":{"weight":"1.2"},"text":"Disable monthly check of nearest device","type":"button"},{"style":{"weight":"0.5"},"type":"space"}],"style":{"weight":"1.2"},"type":"vertical"},{"components":[{"name":"updated_at","style":{"weight":"1.2"},"text":"Updated at: ","type":"label"},{"style":{"weight":"0.5"},"type":"space"}],"style":{"weight":"1.2"},"type":"vertical"}]}},"head":{"title":"quickApp_device_28"}}},"uiCallbacks":[{"callback":"onRefreshClick","eventType":"onReleased","name":"button1"},{"callback":"","eventType":"onReleased","name":"button2"}],"quickAppVariables":[{"name":"API_TOKEN","value":""},{"name":"DEVICE_ID","value":""}],"typeTemplateInitialized":true},"files":[{"name":"main","isMain":true,"isOpen":true,"content":"function QuickApp:onInit()\n    self:debug(\"[LookO2] Init quick app\")\n    QuickApp.looko2Client = ApiClient:new(self:getVariable(\"API_TOKEN\"))\n\n    local settings = api.get('/globalVariables/looko2')\n    if settings == nil then\n        self:trace(\"[LookO2] Settings not found, creating with default values\")\n        api.post('/globalVariables', {\n            name = 'looko2',\n            value = json.encode({\n                schema_version = 1\n            })\n        })\n    end\n\n    self.sensorsMap = {}\n\n    self:initChildDevices({\n        [\"com.fibaro.multilevelSensor\"] = AirQualitySensor\n    })\n    self:initializeChildDevices()\n    self:createMissingSensors()\n    self:loop(30)\n    -- self:updateProperty('manufacturer', \"LookO2\")\nend\n\nfunction QuickApp:createChild(sensorLabel)\n    local child = self:createChildDevice({\n        name = sensorLabel,\n        type = \"com.fibaro.multilevelSensor\",\n    }, AirQualitySensor)\n\n    self:trace(\"[LookO2][createChild] Device for \", sensorLabel, \" sensor created under ID \", child.id)\n    return child\nend\n\nfunction QuickApp:getChildDevice(sensorLabel)\n    local deviceId = self.sensorsMap[sensorLabel]\n    return self.childDevices[deviceId]\nend\n\nfunction QuickApp:createMissingSensors()\n    for i, name in ipairs({\"PM1\", \"PM2.5\", \"PM10\"}) do\n        if self.sensorsMap[name] == nil then\n\n          self:debug(\"[LookO2][createMissingSensors] \",name, \" is missing, creating \")\n          self.sensorsMap[name] = self:createChild(name)\n        end\n    end\nend\n\nfunction QuickApp:initializeChildDevices()\n    for id,device in pairs(self.childDevices) do\n        self.sensorsMap[device.name] = id\n        self:debug(\"[LookO2][initChildDevices] Found \", device.name, \" sensor under device ID \", id, \" (type: \", device.type, \")\")\n    end\nend\n\n\nfunction QuickApp:loop(minutes)\n    -- re-run after 30 minutes\n    fibaro.setTimeout(minutes * 60 * 1000, function()\n        self:loop()\n    end)\n\n    local settings = json.decode(api.get('/globalVariables/looko2').value)\n    self:reloadDeviceData(settings)\nend\n\n\nfunction QuickApp:reloadDeviceData(settings)\n    self:debug(\"[LookO2][reloadDeviceData] Triggered\")\n    self.looko2Client:getLastSensorMesurement(\n        self:getVariable(\"DEVICE_ID\"),\n        function(response)\n            self:debug(\"[LookO2] Got API response\", response)\n            self:getChildDevice(\"PM2.5\"):updateProperty(\"value\", tonumber(response.PM25))\n            self:getChildDevice(\"PM10\"):updateProperty(\"value\", tonumber(response.PM10))\n            self:getChildDevice(\"PM1\"):updateProperty(\"value\", tonumber(response.PM1))\n        end,\n        function(message)\n            self:debug(\"[LookO2] error:\", message)\n        end\n    )\nend\n\nfunction QuickApp:onRefreshClick(event)\n    self:reloadDeviceData()\nend\n"},{"name":"ApiClient","isMain":false,"isOpen":true,"content":"class 'ApiClient'\n\nfunction ApiClient:new(token)\n    self.token = token\n    --self.baseUrl = \"https://b67e27cf3c4f60c683b9cb2bfc41fd6e.m.pipedream.net/\"\n    self.baseUrl = \"http://api.looko2.com/\"\n    return self\nend\n\nfunction ApiClient:getLastSensorMesurement(deviceId, success, error)\n    self:get(\"?method=GetLOOKO&id=\"..deviceId..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getAllSensors(success, error)\n    self:get(\"?method=GetAll&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getClosestSensor(lat, long, success, error)\n    self:get(\"?method=GPSGetClosestLooko&lat=\"..lat..\"&lon=\"..long..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:get(query, success, error)\n    local client = net.HTTPClient()\n    client:request(self.baseUrl..query, {\n        options = {\n            method = \"GET\",\n            headers = {\n                [\"Accept\"] = \"application/json\"\n            }\n        },\n        success = function (response) \n            success(json.decode(response.data))   \n        end,\n        error = error\n    })\nend"},{"name":"AirQualitySensor","isMain":false,"isOpen":true,"content":"-- Each devicVe type you create should have its own class which inherits from the QuickAppChild type.\nclass 'AirQualitySensor' (QuickAppChild)\n\nAirQualitySensor.class = 'com.fibaro.multilevelSensor'\n\nfunction AirQualitySensor:__init(device)\n    QuickAppChild.__init(self, device)\n    self:updateProperty(\"unit\", \"㎍/㎥\")\nend\n\nfunction AirQualitySensor:updateValue(value)\n    self:debug(\"[AirQualitySensor] Change value of \", self.unit, \" (device: \", self.id, \") from \", self.id, \" to \", value)\n    self:updateProperty(\"value\", value)\nend\n\nfunction AirQualitySensor:updateUnit(unit)\n    self:updateProperty(\"unit\", unit)\nend\n"}]}
+{
+  "name": "LookO2",
+  "type": "com.fibaro.multilevelSensor",
+  "apiVersion": "1.2",
+  "initialProperties": {
+    "viewLayout": {
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "0"
+            },
+            "title": "quickApp_device_28"
+          },
+          "sections": {
+            "items": [{
+              "components": [{
+                "name": "title",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "LookO2",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "button_refresh",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Refresh metrics",
+                "type": "button"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "summary",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "...",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "find_nearest_device",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Find nearest device",
+                "type": "button"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "nearest_sensor",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Nearest sensor: not checked yet",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "version",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Version: x.x.x",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }]
+          }
+        },
+        "head": {
+          "title": "quickApp_device_28"
+        }
+      }
+    },
+    "uiCallbacks": [{
+      "callback": "onRefreshClick",
+      "eventType": "onReleased",
+      "name": "button_refresh"
+    }, {
+      "callback": "onFindNearestDevice",
+      "eventType": "onReleased",
+      "name": "find_nearest_device"
+    }],
+    "quickAppVariables": [{
+      "name": "API_TOKEN",
+      "value": ""
+    }, {
+      "name": "DEVICE_ID",
+      "value": ""
+    }],
+    "typeTemplateInitialized": true
+  },
+  "files": [{
+    "name": "main",
+    "isMain": true,
+    "isOpen": true,
+    "content": "function QuickApp:onInit()\n  self:debug(\"[LookO2] Initializing app\")\n    QuickApp.i18n = i18n:new()\n    QuickApp.GUI = GUI:new(self, self.i18n)\n    QuickApp.settings = Settings:new()\n    self.GUI:load(self.settings)\n\n    QuickApp.looko2Client = ApiClient:new(self:getVariable(\"API_TOKEN\"))\n    self.sensorsMap = {}\n    self:initChildDevices({\n        [\"com.fibaro.multilevelSensor\"] = AirQualitySensor\n    })\n    self:initializeChildDevices()\n    self:createMissingSensors()\n    -- self:loop()\nend\n\nfunction QuickApp:createChild(sensorLabel)\n    local parentRoomId = api.get('/devices/' .. self.id).roomID\n    local child = self:createChildDevice({\n        name = sensorLabel,\n        type = \"com.fibaro.multilevelSensor\",\n    }, AirQualitySensor)\n\n    api.put('/devices/' .. child.id, {roomID = parentRoomId, properties = {\n      quickAppVariables = {{ name = sensorLabel }}\n    }})\n\n    self:trace(\"[LookO2][createChild] Device for \", sensorLabel, \" sensor created under ID \", child.id)\n    return child\nend\n\nfunction QuickApp:getChildDevice(sensorLabel)\n    local deviceId = self.sensorsMap[sensorLabel]\n    return self.childDevices[deviceId]\nend\n\nfunction QuickApp:createMissingSensors()\n    for i, name in ipairs({\"PM1\", \"PM2.5\", \"PM10\"}) do\n        if self.sensorsMap[name] == nil then\n\n          self:debug(\"[LookO2][createMissingSensors] \",name, \" is missing, creating \")\n          self.sensorsMap[name] = self:createChild(name)\n        end\n    end\nend\n\nfunction QuickApp:initializeChildDevices()\n    for id,device in pairs(self.childDevices) do\n        self.sensorsMap[device.name] = id\n        self:debug(\"[LookO2][initChildDevices] Found \", device.name, \" sensor under device ID \", id, \" (type: \", device.type, \")\")\n    end\nend\n\n\n\nfunction QuickApp:loop()\n  function scheduleNextReload(response)\n    local nextRefreshAfter = 1800 - (os.time() - tonumber(response.Epoch)) -- seconds\n    if nextRefreshAfter < 0 then\n      nextRefreshAfter = 1800 -- TODO count occurences, high value suggests sensor might not be responding for some time\n    end\n    self:debug(\"[LookO2] Scheduling next data raload afer \",  nextRefreshAfter, \" seconds\")\n\n    fibaro.setTimeout(nextRefreshAfter * 1000, function()\n        self:loop()\n    end)\n  end\n\n  self:reloadDeviceData(scheduleNextReload)\nend\n\nfunction QuickApp:onFindNearestDevice(event)\n  local location = api.get('/settings/location')\n  self.looko2Client:getClosestSensor(\n    location.latitude, location.longitude,\n    function (response)\n\n      local distance = geo_distance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude)\n      self:updateView(\n          \"nearest_sensor\", \"text\",\n          self.i18n:get(\"nearest_sensor_summary\", response.Device, distance)\n      )\n    end\n  )\nend\n\nfunction QuickApp:reloadDeviceData(callback)\n  local icons = {\n    not_available = \"💤\",\n    very_good = \"🔵\",\n    good = \"🟢\",\n    moderate = \"🟡\",\n    satisfactory = \"🟠\",\n    bad = \"🔴\",\n    hazardous = \"🟣\"\n  }\n\n    self:debug(\"[LookO2][reloadDeviceData] Triggered\")\n    self.looko2Client:getLastSensorMesurement(\n        self:getVariable(\"DEVICE_ID\"),\n        function(response)\n            self:debug(\"[LookO2] Got API response\", response)\n            self.settings:persist('lastSuccessResponse', response)\n\n            self:getChildDevice(\"PM2.5\"):updateValue(tonumber(response.PM25))\n            self:getChildDevice(\"PM10\"):updateValue(tonumber(response.PM10))\n            self:getChildDevice(\"PM1\"):updateValue(tonumber(response.PM1))\n\n            local airQualityIndex = tonumber(response.IJP)\n            if (airQualityIndex == 0) then\n              pickedIcon = icons.very_good\n            elseif (airQualityIndex <= 2) then\n              pickedIcon = icons.good\n            elseif (airQualityIndex <= 4) then\n              pickedIcon = icons.moderate\n            elseif (airQualityIndex <= 6) then\n              pickedIcon = icons.satisfactory\n            elseif (airQualityIndex <= 9) then\n              pickedIcon = icons.bad\n            else\n              pickedIcon = icons.hazardous\n            end\n\n            local indexChange = tonumber(response.PreviousIJP) - tonumber(response.IJP);\n            local increaseIcon = indexChange > 0 and \" (📈+\".. indexChange .. \")\" or \"\"\n            local decreaseIcon = indexChange < 0 and \" (📉\".. indexChange .. \")\" or \"\"\n\n            local sensorsLog = pickedIcon .. \" \" .. response.IJPStringEN .. increaseIcon .. decreaseIcon\n            self:getChildDevice(\"PM2.5\"):updateProperty(\"log\", sensorsLog)\n            self:getChildDevice(\"PM10\"):updateProperty(\"log\", sensorsLog)\n            self:getChildDevice(\"PM1\"):updateProperty(\"log\", sensorsLog)\n\n            local location = api.get('/settings/location')\n            self:updateView(\n                \"summary\", \"text\",\n\n                self.i18n:get(\"last_measurement\", os.date(\"%Y-%m-%d %X\", tonumber(response.Epoch))) .. \"\\n\\n\" ..\n                self.i18n:get(\"last_refresh\", os.date(\"%Y-%m-%d %X\")) .. \"\\n\" ..\n                self.i18n:get(\"picked_sensor_distanse\", geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude))\n            )\n            callback(response)\n        end,\n        function(message)\n            self:debug(\"[LookO2] error:\", message)\n            callback({ Epoch = os.time() })\n        end\n    )\nend\n\nfunction geo_distance(lat1, lon1, lat2, lon2)\n  if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil then\n    return nil\n  end\n  local dlat = math.rad(lat2-lat1)\n  local dlon = math.rad(lon2-lon1)\n  local sin_dlat = math.sin(dlat/2)\n  local sin_dlon = math.sin(dlon/2)\n  local a = sin_dlat * sin_dlat + math.cos(math.rad(lat1)) * math.cos(math.rad(lat2)) * sin_dlon * sin_dlon\n  local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))\n  -- 6378 km is the earth's radius at the equator.\n  -- 6357 km would be the radius at the poles (earth isn't a perfect circle).\n  -- Thus, high latitude distances will be slightly overestimated\n  -- To get miles, use 3963 as the constant (equator again)\n  local d = 6378 * c\n  return d\nend\n\nfunction QuickApp:onRefreshClick(event)\n    self:reloadDeviceData(\n    function () end\n  )\nend\n"
+  }, {
+    "name": "ApiClient",
+    "isMain": false,
+    "isOpen": true,
+    "content": "class 'ApiClient'\n\nfunction ApiClient:new(token)\n    self.token = token\n    self.baseUrl = \"http://api.looko2.com/\"\n    return self\nend\n\nfunction ApiClient:getLastSensorMesurement(deviceId, success, error)\n    self:get(\"?method=GetLOOKO&id=\"..deviceId..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getAllSensors(success, error)\n    self:get(\"?method=GetAll&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getClosestSensor(lat, long, success, error)\n    self:get(\"?method=GPSGetClosestLooko&lat=\"..lat..\"&lon=\"..long..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:get(query, success, error)\n    local client = net.HTTPClient()\n    client:request(self.baseUrl..query, {\n        options = {\n            method = \"GET\",\n            headers = {\n                [\"Accept\"] = \"application/json\"\n            }\n        },\n        success = function (response)\n            QuickApp:debug(response.status)\n            QuickApp:debug(response.data)\n            success(json.decode(response.data))\n        end,\n        error = error\n    })\nend\n"
+  }, {
+    "name": "AirQualitySensor",
+    "isMain": false,
+    "isOpen": true,
+    "content": "class 'AirQualitySensor' (QuickAppChild)\n\nAirQualitySensor.class = 'com.fibaro.multilevelSensor'\n\nfunction AirQualitySensor:__init(device)\n    QuickAppChild.__init(self, device)\n    self:updateProperty(\"unit\", \"㎍/㎥\")\nend\n\nfunction AirQualitySensor:updateValue(value)\n    self:debug(\"[AirQualitySensor] Change value of \", self.unit, \" (device: \", self.id, \") from \", self.id, \" to \", value)\n    self:updateProperty(\"value\", value)\nend\n"
+  }, {
+    "name": "i18n",
+    "isMain": false,
+    "isOpen": true,
+    "content": "class 'i18n'\n\nfunction i18n:new()\n    local lang = api.get(\"/settings/info\").defaultLanguage\n    if not translations[lang] then\n        lang = 'en'\n    end\n    self.translations = translations[lang]\n    self.lang = lang\n    return self\nend\n\nfunction i18n:get(key, ...)\n    if self.translations[key] then\n        return string.format(self.translations[key], ...)\n    end\n    return key\nend\n"
+  }, {
+    "name": "translations",
+    "isMain": false,
+    "isOpen": true,
+    "content": "translations = {\n  pl = {\n    ['title'] = 'LookO2 - Czujniki Jakości Powietrza',\n    ['refresh_data'] = 'Odśwież dane czujników',\n    ['find_nearest_device'] = 'Znajdź najbliższy czujnik',\n    ['last_measurement'] = 'Data ostatniego pomiaru: <font color=\"green\">%s</font>',\n    ['last_refresh'] = 'Data pobrania danych: <font color=\"green\">%s</font>',\n    ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color=\"green\">%s</font>, które jest położone <font color=\"green\">%.2f km</font> od ustawionej lokalizacji.',\n    ['picked_sensor_distanse'] = 'Dystans do wybranego sensora: <font color=\"green\">%.2f km</font>',\n    ['version'] = 'Wersja: %s',\n  },\n  en = {\n    ['title'] = 'LookO2 - Air Quality Sensors',\n    ['refresh_data'] = 'Refresh sensors data',\n    ['find_nearest_device'] = 'Find nearest sensor',\n    ['last_measurement'] = 'Last measurement date: <font color=\"green\">%s</font>',\n    ['last_refresh'] = 'Last fetch at: <font color=\"green\">%s</font>',\n    ['nearest_sensor_summary'] = 'The nearest device is <font color=\"green\">%s</font> which is <font color=\"green\">%.2f km</font> from location you\\'ve defined in HC settings.',\n    ['picked_sensor_distanse'] = 'Distance to picked sensor: <font color=\"green\">%.2f km</font>',\n    ['version'] = 'Version: %s',\n  }\n}\n"
+  }, {
+    "name": "GUI",
+    "isMain": false,
+    "isOpen": true,
+    "content": "class 'GUI'\n\nfunction GUI:new(qa, i18n)\n    self.qa = qa\n    self.i18n = i18n\n    return self\nend\n\nfunction GUI:load(settings)\n    self.qa:updateView(\"title\", \"text\", self.i18n:get(\"title\"))\n    self.qa:updateView(\"button_refresh\", \"text\", self.i18n:get(\"refresh_data\"))\n    self.qa:updateView(\"find_nearest_device\", \"text\", self.i18n:get(\"find_nearest_device\"))\n    self.qa:updateView(\"version\", \"text\", self.i18n:get(\"version\", \"1.0.0\"))\nend\n"
+  }, {
+    "name": "Settings",
+    "isMain": false,
+    "isOpen": true,
+    "content": "class 'Settings'\n\nlocal defaultSettings = {\n  lastSuccessResponse = nil\n}\n\nfunction Settings:new()\n    local settings = api.get('/globalVariables/looko2')\n    self.settings = settings and json.decode(settings.value) or defaultSettings\n\n    if not settings then\n      api.post('/globalVariables', {\n          name = 'looko2',\n          value = json.encode(defaultSettings)\n      })\n    end\n\n    return self\nend\n\nfunction Settings:persist(key, value)\n  self.settings[key] = value\n  local result = api.put('/globalVariables/looko2', {\n      value = json.encode(self.settings)\n  })\nend\n\nfunction Settings:get(key)\n  return self.settings[key]\nend\n"
+  }]
+}
