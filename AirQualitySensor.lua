@@ -1,7 +1,6 @@
--- Each devicVe type you create should have its own class which inherits from the QuickAppChild type.
 class 'AirQualitySensor' (QuickAppChild)
 
-OWSensor.class = 'com.fibaro.multilevelSensor'
+AirQualitySensor.class = 'com.fibaro.multilevelSensor'
 
 function AirQualitySensor:__init(device)
     QuickAppChild.__init(self, device)
