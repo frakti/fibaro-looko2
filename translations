@@ -2,6 +2,7 @@ translations = {
   pl = {
     ['title'] = 'LookO2 - Czujniki Jakości Powietrza',
     ['refresh_data'] = 'Odśwież dane czujników',
+    ['find_nearest_device'] = 'Znajdź najbliższy czujnik',
     ['last_measurement'] = 'Data ostatniego pomiaru: <font color="green">%s</font>',
     ['last_refresh'] = 'Data pobrania danych: <font color="green">%s</font>',
     ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color="green">%s</font>, które jest położone <font color="green">%.2f km</font> od ustawionej lokalizacji.',
@@ -11,6 +12,7 @@ translations = {
   en = {
     ['title'] = 'LookO2 - Air Quality Sensors',
     ['refresh_data'] = 'Refresh sensors data',
+    ['find_nearest_device'] = 'Find nearest sensor',
     ['last_measurement'] = 'Last measurement date: <font color="green">%s</font>',
     ['last_refresh'] = 'Last fetch at: <font color="green">%s</font>',
     ['nearest_sensor_summary'] = 'The nearest device is <font color="green">%s</font> which is <font color="green">%.2f km</font> from location you\'ve defined in HC settings.',

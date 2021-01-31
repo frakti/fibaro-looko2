@@ -3,6 +3,7 @@ function QuickApp:onInit()
     QuickApp.i18n = i18n:new()
     QuickApp.GUI = GUI:new(self, self.i18n)
     QuickApp.settings = Settings:new()
+    self.GUI:load(self.settings)
     QuickApp.looko2Client = ApiClient:new(self:getVariable("API_TOKEN"))
     self.sensorsMap = {}
     self:initChildDevices({
