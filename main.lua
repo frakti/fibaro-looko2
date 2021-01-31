@@ -84,6 +84,20 @@ function QuickApp:loop()
   self:reloadDeviceData(scheduleNextReload)
 end
 
+function QuickApp:onFindNearestDevice(event)
+  local location = api.get('/settings/location')
+  self.looko2Client:getClosestSensor(
+    location.latitude, location.longitude,
+    function (response)
+
+      local distance = geo_distance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude)
+      self:updateView(
+          "nearest_sensor", "text",
+          self.i18n:get("nearest_sensor_summary", response.Device, distance)
+      )
+    end
+  )
+end
 
 function QuickApp:reloadDeviceData(callback)
   local icons = {
@@ -147,7 +161,7 @@ function QuickApp:reloadDeviceData(callback)
     )
 end
 
-local function geo_distance(lat1, lon1, lat2, lon2)
+function geo_distance(lat1, lon1, lat2, lon2)
   if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil then
     return nil
   end

@@ -4,16 +4,17 @@ translations = {
     ['refresh_data'] = 'Odśwież dane czujników',
     ['last_measurement'] = 'Data ostatniego pomiaru: %s',
     ['last_refresh'] = 'Data pobrania danych: %s',
-    ['picked_sensor_distanse'] = 'Dystans do wybranego sensora: %.2f km'
+    ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color="green">%s</font>, które jest położone <font color="green">%.2f km</font> od ustawionej lokalizacji.',
+    ['picked_sensor_distanse'] = 'Dystans do wybranego sensora: %.2f km',
     ['version'] = 'Wersja: %s',
-
   },
   en = {
     ['title'] = 'LookO2 - Air Quality Sensors',
     ['refresh_data'] = 'Refresh sensors data',
     ['last_measurement'] = 'Last measurement date: %s',
     ['last_refresh'] = 'Last fetch at: %s',
-    ['picked_sensor_distanse'] = 'Distance to picked sensor: %.2f km'
+    ['nearest_sensor_summary'] = 'The nearest device is <font color="green">%s</font> which is <font color="green">%.2f km</font> from location you\'ve defined in HC settings.',
+    ['picked_sensor_distanse'] = 'Distance to picked sensor: %.2f km',
     ['version'] = 'Version: %s',
   }
 }
