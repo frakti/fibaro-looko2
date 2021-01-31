@@ -148,9 +148,9 @@ function QuickApp:reloadDeviceData(callback)
             self:updateView(
                 "summary", "text",
 
-                self.i18n:get("last_measurement") .. os.date("%Y-%m-%d %X", tonumber(response.Epoch)) .. "\n \n" ..
-                self.i18n:get("last_refresh") .. os.date("%Y-%m-%d %X"),
-                self.i18n:get("picked_sensor_distanse"), geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude)
+                self.i18n:get("last_measurement", os.date("%Y-%m-%d %X", tonumber(response.Epoch))) .. "\n\n" ..
+                self.i18n:get("last_refresh", os.date("%Y-%m-%d %X")) .. "\n" ..
+                self.i18n:get("picked_sensor_distanse", geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude))
             )
             callback(response)
         end,
