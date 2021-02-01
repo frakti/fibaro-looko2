@@ -10,8 +10,8 @@ translations = {
 
       Odczyt:
       - Stężenie PM1: %s ㎍/㎥
-      - Stężenie PM2.5: %s ㎍/㎥ (100 %%)
-      - Stężenie PM10: %s ㎍/㎥ (100 %%)
+      - Stężenie PM2.5: %s ㎍/㎥ (%.0f%%)
+      - Stężenie PM10: %s ㎍/㎥ (%.0f%%)
       - Temperatura: %s °C
       - Stan jakości powietrza: %s
       - Opis: %s
@@ -30,8 +30,8 @@ translations = {
 
       Readings:
       - PM1: %s ㎍/㎥
-      - PM2.5: %s ㎍/㎥ (100 %%)
-      - PM10: %s ㎍/㎥ (100 %%)
+      - PM2.5: %s ㎍/㎥ (%.0f%%)
+      - PM10: %s ㎍/㎥ (%.0f%%)
       - Temperature: %s °C
       - Air quality rating: %s
       - Description: %s

@@ -141,8 +141,8 @@ function QuickApp:reloadDeviceData(callback)
                   os.date("%Y-%m-%d %X"),
                   os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
                   tonumber(response.PM1),
-                  tonumber(response.PM25),
-                  tonumber(response.PM10),
+                  tonumber(response.PM25), (tonumber(response.PM25) / 25) * 100,
+                  tonumber(response.PM10), (tonumber(response.PM10) / 50) * 100,
                   tonumber(response.Temperature),
                   pickedIcon .. self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}) .. increaseIcon .. decreaseIcon,
                   self.i18n:pickByLang({
