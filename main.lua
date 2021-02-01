@@ -122,7 +122,7 @@ function QuickApp:reloadDeviceData(callback)
               pickedIcon = icons.hazardous
             end
 
-            local indexChange = tonumber(response.PreviousIJP) - tonumber(response.IJP);
+            local indexChange = tonumber(response.IJP) - tonumber(response.PreviousIJP);
             local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
             local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
 
