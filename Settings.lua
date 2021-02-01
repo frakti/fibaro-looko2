@@ -1,7 +1,8 @@
 class 'Settings'
 
 local defaultSettings = {
-  lastSuccessResponse = nil
+  lastSuccessResponse = nil,
+  nextRefreshAt = os.time()
 }
 
 function Settings:new()

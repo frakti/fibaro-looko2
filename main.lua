@@ -11,8 +11,17 @@ function QuickApp:onInit()
     })
     self:initializeChildDevices()
     self:createMissingSensors()
-    self:loop()
-    -- self:updateProperty('manufacturer', "LookO2")
+
+    local secondsToNextRefresh = self.settings.get("nextRefreshAt") - os.time()
+    if secondsToNextRefresh <= 0 then
+      self:debug("[LookO2][onInit] It's been more than 30 minutes since last data refresh, triggering it immedietely")
+      self:loop()
+    else
+      self:debug("[LookO2][onInit] Scheduling first data refresh to trigger ater", secondsToNextRefresh, " seconds")
+      fibaro.setTimeout(secondsToNextRefresh * 1000, function()
+        self:loop()
+      end)
+    end
 end
 
 function QuickApp:createChild(sensorLabel)
@@ -55,17 +64,12 @@ end
 
 
 function QuickApp:loop()
-  function scheduleNextReload(response)
-    local nextRefreshAfter = 1800 - (os.time() - tonumber(response.Epoch)) -- seconds
-    if nextRefreshAfter < 0 then
-      nextRefreshAfter = 1800 -- TODO count occurences, high value suggests sensor might not be responding for some time
-    end
-    self:debug("[LookO2] Scheduling next data raload afer ",  nextRefreshAfter, " seconds")
-
-    fibaro.setTimeout(nextRefreshAfter * 1000, function()
-        self:loop()
-    end)
-  end
+  local nextRefreshAfter = 30 * 60;
+  self:debug("[LookO2] Scheduling next data raload afer ",  nextRefreshAfter, " seconds")
+  fibaro.setTimeout(nextRefreshAfter * 1000, function()
+    self:loop()
+  end)
+  self.settings:persist('nextRefreshAt', os.time() + nextRefreshAfter)
 
   self:reloadDeviceData(scheduleNextReload)
 end
