@@ -9,10 +9,10 @@ translations = {
       Data ostatniego odczytu sensora: <font color="green">%s</font>
 
       Odczyt:
-      - Stężenie PM1: %s ㎍/㎥
-      - Stężenie PM2.5: %s ㎍/㎥ (%.0f%%)
-      - Stężenie PM10: %s ㎍/㎥ (%.0f%%)
-      - Temperatura: %s °C
+      - Stężenie PM1: <font color="green">%s ㎍/㎥</font>
+      - Stężenie PM2.5: <font color="green">%s ㎍/㎥ (%.0f%%)</font>
+      - Stężenie PM10: <font color="green">%s ㎍/㎥ (%.0f%%)</font>
+      - Temperatura: <font color="green">%s °C</font>
       - Stan jakości powietrza: %s
       - Opis: %s
     ]],
@@ -29,10 +29,10 @@ translations = {
       Last sensor reading date: <font color="green">%s</font>
 
       Readings:
-      - PM1: %s ㎍/㎥
-      - PM2.5: %s ㎍/㎥ (%.0f%%)
-      - PM10: %s ㎍/㎥ (%.0f%%)
-      - Temperature: %s °C
+      - PM1: <font color="green">%s ㎍/㎥</font>
+      - PM2.5: <font color="green">%s ㎍/㎥ (%.0f%%)</font>
+      - PM10: <font color="green">%s ㎍/㎥ (%.0f%%)</font>
+      - Temperature: <font color="green">%s °C</font>
       - Air quality rating: %s
       - Description: %s
     ]],
