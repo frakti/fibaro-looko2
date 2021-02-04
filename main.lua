@@ -76,7 +76,7 @@ function QuickApp:loop()
   end)
   self.settings:persist('nextRefreshAt', os.time() + nextRefreshAfter)
 
-  self:reloadDeviceData(scheduleNextReload)
+  self:reloadDeviceData()
 end
 
 function QuickApp:onFindNearestDevice(event)
@@ -94,7 +94,7 @@ function QuickApp:onFindNearestDevice(event)
   )
 end
 
-function QuickApp:reloadDeviceData(callback)
+function QuickApp:reloadDeviceData()
   local icons = {
     not_available = "💤",
     very_good = "🔵",
@@ -160,11 +160,9 @@ function QuickApp:reloadDeviceData(callback)
                   })
                 )
             )
-            callback(response)
         end,
         function(message)
-            self:debug("[LookO2] error:", message)
-            callback({ Epoch = os.time() })
+            self:debug("[LookO2][reloadDeviceData] error:", message)
         end
     )
 end
@@ -188,7 +186,5 @@ function geo_distance(lat1, lon1, lat2, lon2)
 end
 
 function QuickApp:onRefreshClick(event)
-    self:reloadDeviceData(
-    function () end
-  )
+    self:reloadDeviceData()
 end
