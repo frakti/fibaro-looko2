@@ -32,7 +32,7 @@ function QuickApp:createChild(sensorLabel)
     }, AirQualitySensor)
 
     api.put('/devices/' .. child.id, {roomID = parentRoomId, properties = {
-      quickAppVariables = {{ name = sensorLabel }}
+      quickAppVariables = {{ name = "sensor", value = sensorLabel }}
     }})
 
     self:trace("[LookO2][createChild] Device for ", sensorLabel, " sensor created under ID ", child.id)
@@ -55,9 +55,14 @@ function QuickApp:createMissingSensors()
 end
 
 function QuickApp:initializeChildDevices()
-    for id,device in pairs(self.childDevices) do
-        self.sensorsMap[device.name] = id
-        self:debug("[LookO2][initChildDevices] Found ", device.name, " sensor under device ID ", id, " (type: ", device.type, ")")
+    for id, device in pairs(self.childDevices) do
+      local quickAppVariables = {}
+      for _, var in pairs(device.properties.quickAppVariables) do
+          quickAppVariables[var.name] = var.value
+      end
+
+      self.sensorsMap[quickAppVariables.sensor] = id
+      self:debug("[LookO2][initChildDevices] Found ", quickAppVariables.sensor, " sensor under device ID: ", id)
     end
 end
 
