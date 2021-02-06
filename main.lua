@@ -12,7 +12,7 @@ function QuickApp:onInit()
     self:initializeChildDevices()
     self:createMissingSensors()
 
-    local secondsToNextRefresh = self.settings.get("nextRefreshAt") - os.time()
+    local secondsToNextRefresh = self.settings:get("nextRefreshAt") - os.time()
     if secondsToNextRefresh <= 0 then
       self:debug("[LookO2][onInit] It's been more than 30 minutes since last data refresh, triggering it immedietely")
       self:loop()
@@ -105,66 +105,66 @@ function QuickApp:reloadDeviceData()
     hazardous = "🟣"
   }
 
-    self:debug("[LookO2][reloadDeviceData] Triggered")
-    self.looko2Client:getLastSensorMesurement(
-        self:getVariable("DEVICE_ID"),
-        function(response)
-            self:debug("[LookO2] Got API response", response)
-            self.settings:persist('lastSuccessResponse', response)
+  self:debug("[LookO2][reloadDeviceData] Triggered")
+  self.looko2Client:getLastSensorMesurement(
+      self:getVariable("DEVICE_ID"),
+      function(response)
+          self:debug("[LookO2] Got API response", response)
+          self.settings:persist('lastSuccessResponse', response)
 
-            self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
-            self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
-            self:getChildDevice("PM1"):updateValue(tonumber(response.PM1))
+          self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
+          self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
+          self:getChildDevice("PM1"):updateValue(tonumber(response.PM1))
 
-            local airQualityIndex = tonumber(response.IJP)
-            if (airQualityIndex == 0) then
-              pickedIcon = icons.very_good
-            elseif (airQualityIndex <= 2) then
-              pickedIcon = icons.good
-            elseif (airQualityIndex <= 4) then
-              pickedIcon = icons.moderate
-            elseif (airQualityIndex <= 6) then
-              pickedIcon = icons.satisfactory
-            elseif (airQualityIndex <= 9) then
-              pickedIcon = icons.bad
-            else
-              pickedIcon = icons.hazardous
-            end
+          local airQualityIndex = tonumber(response.IJP)
+          if (airQualityIndex == 0) then
+            pickedIcon = icons.very_good
+          elseif (airQualityIndex <= 2) then
+            pickedIcon = icons.good
+          elseif (airQualityIndex <= 4) then
+            pickedIcon = icons.moderate
+          elseif (airQualityIndex <= 6) then
+            pickedIcon = icons.satisfactory
+          elseif (airQualityIndex <= 9) then
+            pickedIcon = icons.bad
+          else
+            pickedIcon = icons.hazardous
+          end
 
-            local indexChange = tonumber(response.IJP) - tonumber(response.PreviousIJP);
-            local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
-            local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
+          local indexChange = tonumber(response.IJP) - tonumber(response.PreviousIJP);
+          local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
+          local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
 
-            local sensorsLog = pickedIcon .. " " .. response.IJPStringEN .. increaseIcon .. decreaseIcon
-            self:getChildDevice("PM2.5"):updateProperty("log", sensorsLog)
-            self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
-            self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
+          local sensorsLog = pickedIcon .. " " .. response.IJPStringEN .. increaseIcon .. decreaseIcon
+          self:getChildDevice("PM2.5"):updateProperty("log", sensorsLog)
+          self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
+          self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
 
-            local location = api.get('/settings/location')
-            self:updateView(
-                "summary", "text",
-                self.i18n:get(
-                  "last_collect_summary",
-                  self:getVariable("DEVICE_ID"),
-                  geo_distance(tonumber(response.Lat),tonumber(response.Lon),location.latitude, location.longitude),
-                  os.date("%Y-%m-%d %X"),
-                  os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
-                  tonumber(response.PM1),
-                  tonumber(response.PM25), (tonumber(response.PM25) / 25) * 100,
-                  tonumber(response.PM10), (tonumber(response.PM10) / 50) * 100,
-                  tonumber(response.Temperature),
-                  pickedIcon .. self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}) .. increaseIcon .. decreaseIcon,
-                  self.i18n:pickByLang({
-                    pl = response.IJPDescription,
-                    en = response.IJPDescriptionEN
-                  })
-                )
-            )
-        end,
-        function(message)
-            self:debug("[LookO2][reloadDeviceData] error:", message)
-        end
-    )
+          local location = api.get('/settings/location')
+          self:updateView(
+              "summary", "text",
+              self.i18n:get(
+                "last_collect_summary",
+                self:getVariable("DEVICE_ID"),
+                geo_distance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude),
+                os.date("%Y-%m-%d %X"),
+                os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
+                tonumber(response.PM1),
+                tonumber(response.PM25), (tonumber(response.PM25) / 25) * 100,
+                tonumber(response.PM10), (tonumber(response.PM10) / 50) * 100,
+                tonumber(response.Temperature),
+                pickedIcon .. self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}) .. increaseIcon .. decreaseIcon,
+                self.i18n:pickByLang({
+                  pl = response.IJPDescription,
+                  en = response.IJPDescriptionEN
+                })
+              )
+          )
+      end,
+      function(message)
+          self:debug("[LookO2][reloadDeviceData] error:", message)
+      end
+  )
 end
 
 function geo_distance(lat1, lon1, lat2, lon2)
