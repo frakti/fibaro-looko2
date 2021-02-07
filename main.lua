@@ -3,6 +3,7 @@ function QuickApp:onInit()
     QuickApp.i18n = i18n:new()
     QuickApp.GUI = GUI:new(self, self.i18n)
     QuickApp.settings = Settings:new()
+    QuickApp.dailyParticleMeanChecker = DailyParticleMeanChecker:new(self.settings)
     self.GUI:load(self.settings)
     QuickApp.looko2Client = ApiClient:new(self:getVariable("API_TOKEN"))
     self.sensorsMap = {}
@@ -160,6 +161,8 @@ function QuickApp:reloadDeviceData()
                 })
               )
           )
+
+          self.dailyParticleMeanChecker:record(tonumber(response.Epoch), tonumber(response.AveragePM25))
       end,
       function(message)
           self:debug("[LookO2][reloadDeviceData] error:", message)
