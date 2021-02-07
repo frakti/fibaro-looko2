@@ -111,7 +111,6 @@ function QuickApp:reloadDeviceData()
       self:getVariable("DEVICE_ID"),
       function(response)
           self:debug("[LookO2] Got API response", response)
-          self.settings:persist('lastSuccessResponse', response)
 
           self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
           self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
