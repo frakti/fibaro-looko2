@@ -3,12 +3,16 @@ class "DailyParticleMeanChecker"
 local DAY = 24 * 60 * 60
 local HOUR = 60 * 60
 
-function DailyParticleMeanChecker:new(settings)
+function DailyParticleMeanChecker:new(qa, settings)
+  self.qa = qa
   self.settings = settings
   return self
 end
 
 function DailyParticleMeanChecker:record(recordDate, value)
+  local exceededHoursThreshold = tonumber(self.qa:getVariable("EXCEEDED_HOURS")) or 12
+  local PM25_DAILY_MEAN = tonumber(self.qa:getVariable("PM25_DAILY_MEAN")) or 25
+
   local countHoursAboveThreshold = 0
 
   QuickApp:debug("[DNC] Measurement above norm", recordDate, value)
@@ -30,7 +34,7 @@ function DailyParticleMeanChecker:record(recordDate, value)
     if ((os.time() - measurement.d) < DAY) then
       table.insert(lastDayAverages, measurement)
 
-      if measurement.d < PM25_DAILY_NORM then
+      if measurement.d < PM25_DAILY_MEAN then
         countHoursAboveThreshold = countHoursAboveThreshold + 1
       end
     end
@@ -38,7 +42,7 @@ function DailyParticleMeanChecker:record(recordDate, value)
   end
   if (canPersistNewRecord) then
     table.insert(lastDayAverages, {d = recordDate, v = value})
-    if value < PM25_DAILY_NORM then
+    if value < PM25_DAILY_MEAN then
       countHoursAboveThreshold = countHoursAboveThreshold + 1
     end
   end
@@ -46,7 +50,7 @@ function DailyParticleMeanChecker:record(recordDate, value)
 
   -- trigger custom event if required
   -- local countHoursAboveThreshold = rawlen(lastDayAverages)
-  local exceededHoursThreshold = self.settings:get("exceededHoursNormThreshold")
+
   QuickApp:debug("[DNC] Can send event", canPersistNewRecord, countHoursAboveThreshold >= exceededHoursThreshold, self:haveNotTriggeredWithinGivenHours(exceededHoursThreshold))
 
   if (countHoursAboveThreshold >= exceededHoursThreshold and self:haveNotTriggeredWithinGivenHours(exceededHoursThreshold)) then

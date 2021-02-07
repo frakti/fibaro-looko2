@@ -1,8 +1,9 @@
 class 'Settings'
 
 local defaultSettings = {
-  lastSuccessResponse = nil,
-  nextRefreshAt = os.time()
+  nextRefreshAt = os.time(),
+  averagesAboveNorm = {},
+  lastEventTriggerAt = 0
 }
 
 function Settings:new()
@@ -27,5 +28,5 @@ function Settings:persist(key, value)
 end
 
 function Settings:get(key)
-  return self.settings[key]
+  return self.settings[key] or defaultSettings[key]
 end
