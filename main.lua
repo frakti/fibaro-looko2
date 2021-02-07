@@ -57,13 +57,16 @@ end
 
 function QuickApp:initializeChildDevices()
     for id, device in pairs(self.childDevices) do
-      local quickAppVariables = {}
+      local sensor
       for _, var in pairs(device.properties.quickAppVariables) do
-          quickAppVariables[var.name] = var.value
+          if var.sensor then
+            sensor = var.sensor
+            break
+          end
       end
 
-      self.sensorsMap[quickAppVariables.sensor] = id
-      self:debug("[LookO2][initChildDevices] Found ", quickAppVariables.sensor, " sensor under device ID: ", id)
+      self.sensorsMap[sensor] = id
+      self:debug("[LookO2][initChildDevices] Found ", sensor, " sensor under device ID: ", id)
     end
 end
 
