@@ -2,10 +2,21 @@ class "DailyParticleMeanChecker"
 
 local DAY = 24 * 60 * 60
 local HOUR = 60 * 60
+local EVENT_NAME = "PM25_Mean_Exceeded"
 
 function DailyParticleMeanChecker:new(qa, settings)
   self.qa = qa
   self.settings = settings
+
+  local _, code = api.get("/customEvents/" .. EVENT_NAME)
+  if code == 404 then
+    QuickApp:debug("[DailyParticleMeanChecker] Event definition doesn't exist, creating it")
+    api.post("/customEvents", {
+      name = EVENT_NAME,
+      userDescription = "Triggered when fine particle (PM2.5) 24-hour mean is exceeded for predefined number of hours (EXCEEDED_HOURS variable in LoookO2 QuickApp)"
+    })
+  end
+
   return self
 end
 
@@ -56,7 +67,7 @@ function DailyParticleMeanChecker:record(recordDate, value)
   if (countHoursAboveThreshold >= exceededHoursThreshold and self:haveNotTriggeredWithinGivenHours(exceededHoursThreshold)) then
      self.settings:persist("lastEventTriggerAt", os.time() - 1) -- decreasing to avoid too fast record and missed trigger
     QuickApp:debug("[DNC] Trigger custom event")
-    api.post("/customEvents/PM25_Norm_Exceeded")
+    api.post("/customEvents/" .. EVENT_NAME)
   end
 end
 
