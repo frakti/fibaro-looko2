@@ -59,8 +59,8 @@ function QuickApp:initializeChildDevices()
     for id, device in pairs(self.childDevices) do
       local sensor
       for _, var in pairs(device.properties.quickAppVariables) do
-          if var.sensor then
-            sensor = var.sensor
+          if var.name == "sensor" then
+            sensor = var.value
             break
           end
       end
@@ -68,8 +68,6 @@ function QuickApp:initializeChildDevices()
       self.sensorsMap[sensor] = id
     end
 end
-
-
 
 function QuickApp:loop()
   local nextRefreshAfter = 30 * 60;
@@ -93,6 +91,9 @@ function QuickApp:onFindNearestDevice(event)
           "nearest_sensor", "text",
           self.i18n:get("nearest_sensor_summary", response.Device, distance)
       )
+    end,
+    function(message)
+        self:error("[LookO2][fetch] Couldn't find nearest sensor, cause:", message)
     end
   )
 end
@@ -101,7 +102,7 @@ function QuickApp:reloadDeviceData()
   self.looko2Client:getLastSensorMesurement(
       self:getVariable("DEVICE_ID"),
       function(response)
-          if not response.PM25 then
+          if not response or not response.PM25 then
             self:error("[LookO2][fetch] Provided DEVICE_ID is wrong and doesn't correspond to any existing LookO2 sensor")
             return
           end
@@ -126,8 +127,8 @@ function QuickApp:reloadDeviceData()
                 os.date("%Y-%m-%d %X"),
                 os.date("%Y-%m-%d %X", result.readAt),
                 result.PM1,
-                result.PM25, (result.PM25 / 25) * 100,
-                result.PM10, (result.PM10 / 50) * 100,
+                result.PM25, (result.PM25 / tonumber(self:getVariable("PM25_DAILY_MEAN"))) * 100,
+                result.PM10, (result.PM10 / tonumber(self:getVariable("PM10_DAILY_MEAN"))) * 100,
                 result.temperature,
                 sensorsLog,
                 result.longDescription

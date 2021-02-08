@@ -19,6 +19,10 @@ function ApiClient:getClosestSensor(lat, long, success, error)
 end
 
 function ApiClient:get(query, success, error)
+    if not self.token == "" then
+      error("Missing LookO2 API token")
+      return
+    end
     local client = net.HTTPClient()
     client:request(self.baseUrl..query, {
         options = {
@@ -32,7 +36,7 @@ function ApiClient:get(query, success, error)
               error("Provided LookO2 API token is invalid")
               return
             end
-            success(json.decode(response.data))
+            success(json.decode(response.data), response.status, response.headers)
         end,
         error = error
     })
