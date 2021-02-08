@@ -142,7 +142,12 @@ function QuickApp:reloadDeviceData()
               .. (result.sensorIssues.offline and self.i18n:get("sensor_issue_offline") or "")
           )
 
-          self.dailyParticleMeanChecker:record(result.readAt, result.avgPM25)
+          if (result.sensorIssues.dirty or result.sensorIssues.abandoned or result.sensorIssues.offline) then
+            self:updateProperty("log", "⚠️ " .. self.i18n:get("sensor_issue_log"))
+          else
+            self:updateProperty("log", "")
+            self.dailyParticleMeanChecker:record(result.readAt, result.avgPM25)
+          end
       end,
       function(message)
           self:error("[LookO2][fetch] Couldn't read data from server, cause:", message)

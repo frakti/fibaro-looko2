@@ -18,6 +18,7 @@ translations = {
     ]],
     ['sensor_issue_dirty'] = '<font color="red">UWAGA! Wybrany czujnik może nie pokazywać dokładnych danych. Podejrzenie zabrudzenia.</font>',
     ['sensor_issue_offline'] = '<font color="red">UWAGA! Wybrany czujnik nie pokazuje aktualnych danych. Ostatni odczyt jest starszy niż 1 dzień.</font>',
+    ['sensor_issue_log'] = 'Problem z wybranym sensorem',
     ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color="green">%s</font>, które jest położone <font color="green">%.2f km</font> od ustawionej lokalizacji.',
     ['version'] = 'Wersja: %s',
   },
@@ -40,6 +41,7 @@ translations = {
     ]],
     ['sensor_issue_dirty'] = '<font color="red">ATTENTION! Picked sensor may not present precise data. Looks like it\'s dirty.</font>',
     ['sensor_issue_offline'] = '<font color="red">ATTENTION! Picked sensor doesn\'t present up-to-date data. Last reading is older than one day.</font>',
+    ['sensor_issue_log'] = 'Picked sensor issue',
     ['nearest_sensor_summary'] = 'The nearest device is <font color="green">%s</font> which is <font color="green">%.2f km</font> from location you\'ve defined in HC settings.',
     ['version'] = 'Version: %s',
   }
