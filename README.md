@@ -19,6 +19,17 @@ Current version is not yet ready to be published. Left to cover before first rel
 - [ ] Clean the code
 - [ ] Add some examples of Scenes using this Quick App
 
+# Screenshots
+
+- Devices list
+<img src="examples/devices.jpg" />
+
+- Example scene - uses custom event as a trigger
+<img src="examples/scene-example-1.jpg" />
+
+- Example scene - uses opened window and PM2.5 sensor value as a trigger
+<img src="examples/scene-example-2.jpg" />
+
 # Development Resources
 - [LookO2 API](https://looko2web.nazwa.pl/aktualnosci/api/)
 - [Fibaro API](https://manuals.fibaro.com/knowledge-base-browse/rest-api/) - can't find HC3 API but apparently API I'm using still works
