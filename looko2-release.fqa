@@ -211,7 +211,7 @@
       "name": "AirQualitySensor",
       "isMain": false,
       "isOpen": false,
-      "content": "class 'AirQualitySensor' (QuickAppChild)\n\nAirQualitySensor.class = 'com.fibaro.multilevelSensor'\n\nfunction AirQualitySensor:__init(device)\n    QuickAppChild.__init(self, device)\n    self:updateProperty(\"unit\", \"㎍/㎥\")\nend\n\nfunction AirQualitySensor:updateValue(value, log)\n    self:updateProperty(\"value\", value)\n    self:updateProperty(\"log\", log or \"\")\n    self:trace(\"[LookO2] Updated \" .. self.name .. \" (ID: \" .. self.id .. \") to: \", value or 0)\nend\n"
+      "content": "class 'AirQualitySensor' (QuickAppChild)\n\nAirQualitySensor.class = 'com.fibaro.multilevelSensor'\n\nfunction AirQualitySensor:__init(device)\n    QuickAppChild.__init(self, device)\n    self:updateProperty(\"unit\", \"㎍/㎥\")\nend\n\nfunction AirQualitySensor:updateValue(value, log)\n    self:updateProperty(\"value\", value)\n    self:updateProperty(\"log\", log or \"\")\nend\n"
     },
     {
       "name": "DailyParticleMeanChecker",
