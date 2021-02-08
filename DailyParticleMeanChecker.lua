@@ -27,12 +27,12 @@ function DailyParticleMeanChecker:record(recordDate, value)
   local countHoursAboveThreshold = 0
 
   QuickApp:debug("[DNC] Measurement above norm", recordDate, value)
-  local averagesAboveNorm = self.settings:get("averagesAboveNorm") or {}
-  QuickApp:debug("[DNC] Fetched averages above norm", json.encode(averagesAboveNorm))
+  local hourlyParticleAverages = self.settings:get("hourlyParticleAverages") or {}
+  QuickApp:debug("[DNC] Fetched averages above norm", json.encode(hourlyParticleAverages))
   local lastDayAverages = {}
 
   local canPersistNewRecord = true
-  for _, measurement in pairs(averagesAboveNorm) do
+  for _, measurement in pairs(hourlyParticleAverages) do
 
     -- all persisted measurements must be older than one hour of new records to make to persist it
     QuickApp:debug("[DNC] IT:" .. _ .. "Check is after 1 hour", recordDate - measurement.d, recordDate - measurement.d > HOUR)
@@ -57,7 +57,7 @@ function DailyParticleMeanChecker:record(recordDate, value)
       countHoursAboveThreshold = countHoursAboveThreshold + 1
     end
   end
-  self.settings:persist("averagesAboveNorm", lastDayAverages)
+  self.settings:persist("hourlyParticleAverages", lastDayAverages)
 
   -- trigger custom event if required
   -- local countHoursAboveThreshold = rawlen(lastDayAverages)

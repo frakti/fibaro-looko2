@@ -2,7 +2,7 @@ class 'Settings'
 
 local defaultSettings = {
   nextRefreshAt = os.time(),
-  averagesAboveNorm = {},
+  hourlyParticleAverages = {},
   lastEventTriggerAt = 0
 }
 
