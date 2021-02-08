@@ -118,11 +118,29 @@ function QuickApp:reloadDeviceData()
             return
           end
 
-          self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
-          self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
-          self:getChildDevice("PM1"):updateValue(tonumber(response.PM1))
+          local result = {
+            readAt = tonumber(response.Epoch),
+            PM25 = tonumber(response.PM25),
+            PM10 = tonumber(response.PM10),
+            PM1 = tonumber(response.PM1),
+            avgPM25 = tonumber(response.AveragePM25),
+            temperature = tonumber(response.Temperature),
+            currentIJP = tonumber(response.IJP),
+            previousIJP = tonumber(response.PreviousIJP),
+            location = {
+              lat = tonumber(response.Lat),
+              long = tonumber(response.Lon),
+            },
+            shortDescription = self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}),
+            longDescription = self.i18n:pickByLang({ pl = response.IJPDescription, en = response.IJPDescriptionEN })
+          }
 
-          local airQualityIndex = tonumber(response.IJP)
+          self:debug("Result", json.encode(result))
+          self:getChildDevice("PM2.5"):updateValue(result.PM25)
+          self:getChildDevice("PM10"):updateValue(result.PM10)
+          self:getChildDevice("PM1"):updateValue(result.PM1)
+
+          local airQualityIndex = result.currentIJP
           if (airQualityIndex == 0) then
             pickedIcon = icons.very_good
           elseif (airQualityIndex <= 2) then
@@ -137,11 +155,11 @@ function QuickApp:reloadDeviceData()
             pickedIcon = icons.hazardous
           end
 
-          local indexChange = tonumber(response.IJP) - tonumber(response.PreviousIJP);
+          local indexChange = result.currentIJP - result.previousIJP
           local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
           local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
 
-          local sensorsLog = pickedIcon .. " " .. response.IJPStringEN .. increaseIcon .. decreaseIcon
+          local sensorsLog = pickedIcon .. " " .. result.shortDescription .. increaseIcon .. decreaseIcon
           self:getChildDevice("PM2.5"):updateProperty("log", sensorsLog)
           self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
           self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
@@ -152,22 +170,19 @@ function QuickApp:reloadDeviceData()
               self.i18n:get(
                 "last_collect_summary",
                 self:getVariable("DEVICE_ID"),
-                calculateGeoDistance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude),
+                calculateGeoDistance(result.location.lat, result.location.long, location.latitude, location.longitude),
                 os.date("%Y-%m-%d %X"),
-                os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
-                tonumber(response.PM1),
-                tonumber(response.PM25), (tonumber(response.PM25) / 25) * 100,
-                tonumber(response.PM10), (tonumber(response.PM10) / 50) * 100,
-                tonumber(response.Temperature),
-                pickedIcon .. self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}) .. increaseIcon .. decreaseIcon,
-                self.i18n:pickByLang({
-                  pl = response.IJPDescription,
-                  en = response.IJPDescriptionEN
-                })
+                os.date("%Y-%m-%d %X", result.readAt),
+                result.PM1,
+                result.PM25, (result.PM25 / 25) * 100,
+                result.PM10, (result.PM10 / 50) * 100,
+                result.temperature,
+                sensorsLog,
+                result.longDescription
               )
           )
 
-          self.dailyParticleMeanChecker:record(tonumber(response.Epoch), tonumber(response.AveragePM25))
+          self.dailyParticleMeanChecker:record(result.readAt, result.avgPM25)
       end,
       function(message)
           self:error("[LookO2][fetch] Couldn't read data from server, cause:", message)
