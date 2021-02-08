@@ -132,6 +132,8 @@ function QuickApp:reloadDeviceData()
                 sensorsLog,
                 result.longDescription
               )
+              .. ((result.sensorIssues.dirty or result.sensorIssues.abandoned) and self.i18n:get("sensor_issue_dirty") or "")
+              .. (result.sensorIssues.offline and self.i18n:get("sensor_issue_offline") or "")
           )
 
           self.dailyParticleMeanChecker:record(result.readAt, result.avgPM25)

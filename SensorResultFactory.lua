@@ -9,6 +9,7 @@ local icons = {
   bad = "🔴",
   hazardous = "🟣"
 }
+local DAY = 24 * 60 * 60
 
 function SensorResultFactory:new(i18n)
   self.i18n = i18n
@@ -16,7 +17,7 @@ function SensorResultFactory:new(i18n)
 end
 
 function SensorResultFactory:create(response)
-  return {
+  local result = {
     readAt = tonumber(response.Epoch),
     PM25 = tonumber(response.PM25),
     PM10 = tonumber(response.PM10),
@@ -31,8 +32,12 @@ function SensorResultFactory:create(response)
     },
     shortDescription = self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}),
     longDescription = self.i18n:pickByLang({ pl = response.IJPDescription, en = response.IJPDescriptionEN }),
-    airQualityIndexIcon = resolveAirQualityIndexIcon(tonumber(response.IJP))
   }
+
+  result.airQualityIndexIcon = resolveAirQualityIndexIcon(result.currentIJP)
+  result.sensorIssues = discoverSensorsIssues(result)
+
+  return result
 end
 
 
@@ -51,4 +56,12 @@ function resolveAirQualityIndexIcon(airQualityIndex)
     pickedIcon = icons.hazardous
   end
   return pickedIcon
+end
+
+function discoverSensorsIssues(result)
+  return {
+    dirty = result.PM25 > 30000 or result.PM10 > 30000, -- based on feedback from LookO2 Team
+    offline =  os.time() - result.readAt > DAY,
+    abandoned = result.PM25 == 0 and result.PM10 == 0 and result.PM1 == 0 -- based on feedback from LookO2 Team
+  }
 end
