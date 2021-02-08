@@ -153,6 +153,9 @@
     }, {
       "name": "PM10_DAILY_MEAN",
       "value": "50"
+    }, {
+      "name": "QA_ICON_ID",
+      "value": "110"
     }],
     "typeTemplateInitialized": true
   },

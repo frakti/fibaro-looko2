@@ -23,6 +23,11 @@ function QuickApp:onInit()
         self:loop()
       end)
     end
+
+    if self.properties.deviceIcon ~= tonumber(self:getVariable("QA_ICON_ID")) then
+      self:trace("[LookO2][onInit] Icon out-of-date, updating.")
+      api.put("/devices/" .. self.id, { properties = { deviceIcon = tonumber(self:getVariable("QA_ICON_ID")) } })
+    end
 end
 
 function QuickApp:createChild(sensorLabel)
