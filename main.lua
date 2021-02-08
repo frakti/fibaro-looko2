@@ -1,5 +1,4 @@
 function QuickApp:onInit()
-  self:debug("[LookO2] Initializing app")
     QuickApp.i18n = i18n:new()
     QuickApp.GUI = GUI:new(self, self.i18n)
     QuickApp.settings = Settings:new()
@@ -16,10 +15,10 @@ function QuickApp:onInit()
 
     local secondsToNextRefresh = self.settings:get("nextRefreshAt") - os.time()
     if secondsToNextRefresh <= 0 then
-      self:debug("[LookO2][onInit] It's been more than 30 minutes since last data refresh, triggering it immedietely")
+      self:trace("[LookO2][onInit] It's been more than 30 minutes since last data refresh, triggering it immedietely")
       self:loop()
     else
-      self:debug("[LookO2][onInit] Scheduling first data refresh to trigger ater", secondsToNextRefresh, " seconds")
+      self:trace("[LookO2][onInit] Scheduling first data refresh to trigger ater", secondsToNextRefresh, " seconds")
       fibaro.setTimeout(secondsToNextRefresh * 1000, function()
         self:loop()
       end)
@@ -50,7 +49,7 @@ function QuickApp:createMissingSensors()
     for i, name in ipairs({"PM1", "PM2.5", "PM10"}) do
         if self.sensorsMap[name] == nil then
 
-          self:debug("[LookO2][createMissingSensors] ",name, " is missing, creating ")
+          self:trace("[LookO2][createMissingSensors] ",name, " is missing, creating")
           self.sensorsMap[name] = self:createChild(name)
         end
     end
@@ -67,7 +66,6 @@ function QuickApp:initializeChildDevices()
       end
 
       self.sensorsMap[sensor] = id
-      self:debug("[LookO2][initChildDevices] Found ", sensor, " sensor under device ID: ", id)
     end
 end
 
@@ -75,7 +73,7 @@ end
 
 function QuickApp:loop()
   local nextRefreshAfter = 30 * 60;
-  self:debug("[LookO2] Scheduling next data raload afer ",  nextRefreshAfter, " seconds")
+  self:trace("[LookO2] Scheduling next data raload afer ",  nextRefreshAfter, " seconds")
   fibaro.setTimeout(nextRefreshAfter * 1000, function()
     self:loop()
   end)
