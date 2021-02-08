@@ -7,7 +7,8 @@ function AirQualitySensor:__init(device)
     self:updateProperty("unit", "㎍/㎥")
 end
 
-function AirQualitySensor:updateValue(value)
-    self:debug("[AirQualitySensor] Change value of ", self.unit, " (device: ", self.id, ") from ", self.id, " to ", value)
+function AirQualitySensor:updateValue(value, log)
     self:updateProperty("value", value)
+    self:updateProperty("log", log or "")
+    self:trace("[LookO2] Updated " .. self.name .. " (ID: " .. self.id .. ") to: ", value or 0)
 end

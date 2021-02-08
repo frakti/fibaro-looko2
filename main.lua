@@ -3,6 +3,7 @@ function QuickApp:onInit()
     QuickApp.i18n = i18n:new()
     QuickApp.GUI = GUI:new(self, self.i18n)
     QuickApp.settings = Settings:new()
+    QuickApp.sensorResultFactory = SensorResultFactory:new(self.i18n)
     QuickApp.dailyParticleMeanChecker = DailyParticleMeanChecker:new(self, self.settings)
     self.GUI:load(self.settings)
     QuickApp.looko2Client = ApiClient:new(self:getVariable("API_TOKEN"))
@@ -99,17 +100,6 @@ function QuickApp:onFindNearestDevice(event)
 end
 
 function QuickApp:reloadDeviceData()
-  local icons = {
-    not_available = "💤",
-    very_good = "🔵",
-    good = "🟢",
-    moderate = "🟡",
-    satisfactory = "🟠",
-    bad = "🔴",
-    hazardous = "🟣"
-  }
-
-  self:debug("[LookO2][reloadDeviceData] Triggered")
   self.looko2Client:getLastSensorMesurement(
       self:getVariable("DEVICE_ID"),
       function(response)
@@ -118,53 +108,17 @@ function QuickApp:reloadDeviceData()
             return
           end
 
-          local result = {
-            readAt = tonumber(response.Epoch),
-            PM25 = tonumber(response.PM25),
-            PM10 = tonumber(response.PM10),
-            PM1 = tonumber(response.PM1),
-            avgPM25 = tonumber(response.AveragePM25),
-            temperature = tonumber(response.Temperature),
-            currentIJP = tonumber(response.IJP),
-            previousIJP = tonumber(response.PreviousIJP),
-            location = {
-              lat = tonumber(response.Lat),
-              long = tonumber(response.Lon),
-            },
-            shortDescription = self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}),
-            longDescription = self.i18n:pickByLang({ pl = response.IJPDescription, en = response.IJPDescriptionEN })
-          }
-
-          self:debug("Result", json.encode(result))
-          self:getChildDevice("PM2.5"):updateValue(result.PM25)
-          self:getChildDevice("PM10"):updateValue(result.PM10)
-          self:getChildDevice("PM1"):updateValue(result.PM1)
-
-          local airQualityIndex = result.currentIJP
-          if (airQualityIndex == 0) then
-            pickedIcon = icons.very_good
-          elseif (airQualityIndex <= 2) then
-            pickedIcon = icons.good
-          elseif (airQualityIndex <= 4) then
-            pickedIcon = icons.moderate
-          elseif (airQualityIndex <= 6) then
-            pickedIcon = icons.satisfactory
-          elseif (airQualityIndex <= 9) then
-            pickedIcon = icons.bad
-          else
-            pickedIcon = icons.hazardous
-          end
+          local result = self.sensorResultFactory:create(response)
 
           local indexChange = result.currentIJP - result.previousIJP
           local increaseIcon = indexChange > 0 and " (📈+".. indexChange .. ")" or ""
           local decreaseIcon = indexChange < 0 and " (📉".. indexChange .. ")" or ""
-
-          local sensorsLog = pickedIcon .. " " .. result.shortDescription .. increaseIcon .. decreaseIcon
-          self:getChildDevice("PM2.5"):updateProperty("log", sensorsLog)
-          self:getChildDevice("PM10"):updateProperty("log", sensorsLog)
-          self:getChildDevice("PM1"):updateProperty("log", sensorsLog)
-
+          local sensorsLog = result.airQualityIndexIcon .. " " .. result.shortDescription .. increaseIcon .. decreaseIcon
           local location = api.get('/settings/location')
+
+          self:getChildDevice("PM2.5"):updateValue(result.PM25, sensorsLog)
+          self:getChildDevice("PM10"):updateValue(result.PM10, sensorsLog)
+          self:getChildDevice("PM1"):updateValue(result.PM1, sensorsLog)
           self:updateView(
               "summary", "text",
               self.i18n:get(
