@@ -26,7 +26,7 @@ Fill variables:
 - `EXCEEDED_HOURS` - It defines a number of hours within last day, for which PM2.5 hourly moving average value must exceed norm to trigger `PM25_Mean_Exceeded` event. Example: assume it's set to `12`, and within last day from 22:00 - 7:00 (9 hours) and 14:00 - 17:00 (3 hours) PM2.5 average exceeds `PM25_DAILY_MEAN`. The event is triggered at 17:00. Then it waits `EXCEEDED_HOURS` hours before it could again trigger the event.
 - `PM25_DAILY_MEAN` - Defines PM2.5 daily norm - by default using 24-hour mean from WHO guidelines which is 25 ㎍/㎥
 - `PM10_DAILY_MEAN` - Defines PM10 daily norm - by default using 24-hour mean from WHO guidelines which is 50 ㎍/㎥
-- `QA_ICON_ID` - ID of icon for main device. It's not yet possible to automatically install icon within QA, so you must upload it on your own. To do that, pick one of child sensors and upload one of two device icons found on the repository. Then
+- `QA_ICON_ID` - ID of icon for main device. It's not yet possible to automatically install icon within QA, so you must upload it on your own. To do that, pick one of child sensors and upload one of two device icons found on the repository. Then use DevTools to find it's ID, if you're not familiar with the tool just try IDs above 1000.
 
 Additional notes:
 - QuickApp is using `looko2` Global Variable to store persistent state, please don't delete it.
