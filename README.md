@@ -16,8 +16,7 @@ Fill variables:
 # TODO
 
 Current version is not yet ready to be published. Left to cover before first release:
-- [ ] Clean the code
-- [ ] Add some examples of Scenes using this Quick App
+- [ ] docs
 
 # Screenshots
 
