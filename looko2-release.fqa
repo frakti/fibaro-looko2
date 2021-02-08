@@ -1,0 +1,253 @@
+{
+  "name": "LookO2 - Air Quality Sensor",
+  "type": "com.fibaro.genericDevice",
+  "apiVersion": "1.2",
+  "initialProperties": {
+    "viewLayout": {
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "0"
+            },
+            "title": "looko2_qa_device_title"
+          },
+          "sections": {
+            "items": [
+              {
+                "components": [
+                  {
+                    "name": "title",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "LookO2 - Air Quality Sensor",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "button_refresh",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Refresh metrics",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "summary",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "find_nearest_device",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Find nearest device",
+                    "type": "button"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "nearest_sensor",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              },
+              {
+                "components": [
+                  {
+                    "name": "version",
+                    "style": {
+                      "weight": "1.2"
+                    },
+                    "text": "Version: x.x.x",
+                    "type": "label"
+                  },
+                  {
+                    "style": {
+                      "weight": "0.5"
+                    },
+                    "type": "space"
+                  }
+                ],
+                "style": {
+                  "weight": "1.2"
+                },
+                "type": "vertical"
+              }
+            ]
+          }
+        },
+        "head": {
+          "title": "looko2_qa_device_title"
+        }
+      }
+    },
+    "uiCallbacks": [
+      {
+        "callback": "onRefreshClick",
+        "eventType": "onReleased",
+        "name": "button_refresh"
+      },
+      {
+        "callback": "onFindNearestDevice",
+        "eventType": "onReleased",
+        "name": "find_nearest_device"
+      }
+    ],
+    "quickAppVariables": [
+      {
+        "name": "API_TOKEN",
+        "value": ""
+      },
+      {
+        "name": "DEVICE_ID",
+        "value": "?"
+      },
+      {
+        "name": "EXCEEDED_HOURS",
+        "value": "12"
+      },
+      {
+        "name": "PM25_DAILY_MEAN",
+        "value": "25"
+      },
+      {
+        "name": "PM10_DAILY_MEAN",
+        "value": "50"
+      },
+      {
+        "name": "QA_ICON_ID",
+        "value": "110"
+      }
+    ],
+    "typeTemplateInitialized": true
+  },
+  "files": [
+    {
+      "name": "main",
+      "isMain": true,
+      "isOpen": false,
+      "content": "function QuickApp:onInit()\n    QuickApp.i18n = i18n:new()\n    QuickApp.GUI = GUI:new(self, self.i18n)\n    QuickApp.settings = Settings:new()\n    QuickApp.sensorResultFactory = SensorResultFactory:new(self.i18n)\n    QuickApp.dailyParticleMeanChecker = DailyParticleMeanChecker:new(self, self.settings)\n    self.GUI:load(self.settings)\n    QuickApp.looko2Client = ApiClient:new(self:getVariable(\"API_TOKEN\"))\n    self.sensorsMap = {}\n    self:initChildDevices({\n        [\"com.fibaro.multilevelSensor\"] = AirQualitySensor\n    })\n    self:initializeChildDevices()\n    self:createMissingSensors()\n\n    local secondsToNextRefresh = self.settings:get(\"nextRefreshAt\") - os.time()\n    if secondsToNextRefresh <= 0 then\n      self:trace(\"[LookO2][onInit] It's been more than 30 minutes since last data refresh, triggering it immedietely\")\n      self:loop()\n    else\n      self:trace(\"[LookO2][onInit] Scheduling first data refresh to trigger ater\", secondsToNextRefresh, \" seconds\")\n      fibaro.setTimeout(secondsToNextRefresh * 1000, function()\n        self:loop()\n      end)\n    end\n\n    if self.properties.deviceIcon ~= tonumber(self:getVariable(\"QA_ICON_ID\")) then\n      self:trace(\"[LookO2][onInit] Icon out-of-date, updating.\")\n      api.put(\"/devices/\" .. self.id, { properties = { deviceIcon = tonumber(self:getVariable(\"QA_ICON_ID\")) } })\n    end\nend\n\nfunction QuickApp:createChild(sensorLabel)\n    local parentRoomId = api.get('/devices/' .. self.id).roomID\n    local child = self:createChildDevice({\n        name = sensorLabel,\n        type = \"com.fibaro.multilevelSensor\",\n    }, AirQualitySensor)\n\n    api.put('/devices/' .. child.id, {roomID = parentRoomId, properties = {\n      quickAppVariables = {{ name = \"sensor\", value = sensorLabel }}\n    }})\n\n    self:trace(\"[LookO2][createChild] Device for \", sensorLabel, \" sensor created under ID \", child.id)\n    return child\nend\n\nfunction QuickApp:getChildDevice(sensorLabel)\n    local deviceId = self.sensorsMap[sensorLabel]\n    return self.childDevices[deviceId]\nend\n\nfunction QuickApp:createMissingSensors()\n    for i, name in ipairs({\"PM1\", \"PM2.5\", \"PM10\"}) do\n        if self.sensorsMap[name] == nil then\n\n          self:trace(\"[LookO2][createMissingSensors] \",name, \" is missing, creating\")\n          self.sensorsMap[name] = self:createChild(name)\n        end\n    end\nend\n\nfunction QuickApp:initializeChildDevices()\n    for id, device in pairs(self.childDevices) do\n      local sensor\n      for _, var in pairs(device.properties.quickAppVariables) do\n          if var.name == \"sensor\" then\n            sensor = var.value\n            break\n          end\n      end\n\n      self.sensorsMap[sensor] = id\n    end\nend\n\nfunction QuickApp:loop()\n  local nextRefreshAfter = 30 * 60;\n  self:trace(\"[LookO2] Scheduling next data raload afer \",  nextRefreshAfter, \" seconds\")\n  fibaro.setTimeout(nextRefreshAfter * 1000, function()\n    self:loop()\n  end)\n  self.settings:persist('nextRefreshAt', os.time() + nextRefreshAfter)\n\n  self:reloadDeviceData()\nend\n\nfunction QuickApp:onFindNearestDevice(event)\n  local location = api.get('/settings/location')\n  self.looko2Client:getClosestSensor(\n    location.latitude, location.longitude,\n    function (response)\n\n      local distance = calculateGeoDistance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude)\n      self:updateView(\n          \"nearest_sensor\", \"text\",\n          self.i18n:get(\"nearest_sensor_summary\", response.Device, distance)\n      )\n    end,\n    function(message)\n        self:error(\"[LookO2][fetch] Couldn't find nearest sensor, cause:\", message)\n    end\n  )\nend\n\nfunction QuickApp:reloadDeviceData()\n  self.looko2Client:getLastSensorMesurement(\n      self:getVariable(\"DEVICE_ID\"),\n      function(response)\n          if not response or not response.PM25 then\n            self:error(\"[LookO2][fetch] Provided DEVICE_ID is wrong and doesn't correspond to any existing LookO2 sensor\")\n            return\n          end\n\n          local result = self.sensorResultFactory:create(response)\n\n          local indexChange = result.currentIJP - result.previousIJP\n          local increaseIcon = indexChange > 0 and \" (📈+\".. indexChange .. \")\" or \"\"\n          local decreaseIcon = indexChange < 0 and \" (📉\".. indexChange .. \")\" or \"\"\n          local sensorsLog = result.airQualityIndexIcon .. \" \" .. result.shortDescription .. increaseIcon .. decreaseIcon\n          local location = api.get('/settings/location')\n\n          self:getChildDevice(\"PM2.5\"):updateValue(result.PM25, sensorsLog)\n          self:getChildDevice(\"PM10\"):updateValue(result.PM10, sensorsLog)\n          self:getChildDevice(\"PM1\"):updateValue(result.PM1, sensorsLog)\n          self:updateView(\n              \"summary\", \"text\",\n              self.i18n:get(\n                \"last_collect_summary\",\n                self:getVariable(\"DEVICE_ID\"),\n                calculateGeoDistance(result.location.lat, result.location.long, location.latitude, location.longitude),\n                os.date(\"%Y-%m-%d %X\"),\n                os.date(\"%Y-%m-%d %X\", result.readAt),\n                result.PM1,\n                result.PM25, (result.PM25 / tonumber(self:getVariable(\"PM25_DAILY_MEAN\"))) * 100,\n                result.PM10, (result.PM10 / tonumber(self:getVariable(\"PM10_DAILY_MEAN\"))) * 100,\n                result.temperature,\n                sensorsLog,\n                result.longDescription\n              )\n              .. ((result.sensorIssues.dirty or result.sensorIssues.abandoned) and self.i18n:get(\"sensor_issue_dirty\") or \"\")\n              .. (result.sensorIssues.offline and self.i18n:get(\"sensor_issue_offline\") or \"\")\n          )\n\n          if (result.sensorIssues.dirty or result.sensorIssues.abandoned or result.sensorIssues.offline) then\n            self:updateProperty(\"log\", \"⚠️ \" .. self.i18n:get(\"sensor_issue_log\"))\n          else\n            self:updateProperty(\"log\", \"\")\n            self.dailyParticleMeanChecker:record(result.readAt, result.avgPM25)\n          end\n      end,\n      function(message)\n          self:error(\"[LookO2][fetch] Couldn't read data from server, cause:\", message)\n      end\n  )\nend\n\n-- Used solution from StackOverflow: https://stackoverflow.com/a/21193869\nfunction calculateGeoDistance(lat1, lon1, lat2, lon2)\n  if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil then\n    return nil\n  end\n  local dlat = math.rad(lat2-lat1)\n  local dlon = math.rad(lon2-lon1)\n  local sin_dlat = math.sin(dlat/2)\n  local sin_dlon = math.sin(dlon/2)\n  local a = sin_dlat * sin_dlat + math.cos(math.rad(lat1)) * math.cos(math.rad(lat2)) * sin_dlon * sin_dlon\n  local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))\n  -- 6378 km is the earth's radius at the equator.\n  -- 6357 km would be the radius at the poles (earth isn't a perfect circle).\n  -- Thus, high latitude distances will be slightly overestimated\n  -- To get miles, use 3963 as the constant (equator again)\n  local d = 6378 * c\n  return d\nend\n\nfunction QuickApp:onRefreshClick(event)\n    self:reloadDeviceData()\nend\n"
+    },
+    {
+      "name": "ApiClient",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class 'ApiClient'\n\nfunction ApiClient:new(token)\n    self.token = token\n    self.baseUrl = \"http://api.looko2.com/\"\n    return self\nend\n\nfunction ApiClient:getLastSensorMesurement(deviceId, success, error)\n    self:get(\"?method=GetLOOKO&id=\"..deviceId..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getAllSensors(success, error)\n    self:get(\"?method=GetAll&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:getClosestSensor(lat, long, success, error)\n    self:get(\"?method=GPSGetClosestLooko&lat=\"..lat..\"&lon=\"..long..\"&token=\"..self.token, success, error)\nend\n\nfunction ApiClient:get(query, success, error)\n    if self.token == \"\" then\n      error(\"Missing LookO2 API token\")\n      return\n    end\n    local client = net.HTTPClient()\n    client:request(self.baseUrl..query, {\n        options = {\n            method = \"GET\",\n            headers = {\n                [\"Accept\"] = \"application/json\"\n            }\n        },\n        success = function (response)\n            if response.data == \"Invalid token\" then\n              error(\"Provided LookO2 API token is invalid\")\n              return\n            end\n            success(json.decode(response.data), response.status, response.headers)\n        end,\n        error = error\n    })\nend\n"
+    },
+    {
+      "name": "AirQualitySensor",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class 'AirQualitySensor' (QuickAppChild)\n\nAirQualitySensor.class = 'com.fibaro.multilevelSensor'\n\nfunction AirQualitySensor:__init(device)\n    QuickAppChild.__init(self, device)\n    self:updateProperty(\"unit\", \"㎍/㎥\")\nend\n\nfunction AirQualitySensor:updateValue(value, log)\n    self:updateProperty(\"value\", value)\n    self:updateProperty(\"log\", log or \"\")\n    self:trace(\"[LookO2] Updated \" .. self.name .. \" (ID: \" .. self.id .. \") to: \", value or 0)\nend\n"
+    },
+    {
+      "name": "DailyParticleMeanChecker",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class \"DailyParticleMeanChecker\"\n\nlocal DAY = 24 * 60 * 60\nlocal HOUR = 60 * 60\nlocal EVENT_NAME = \"PM25_Mean_Exceeded\"\n\nfunction DailyParticleMeanChecker:new(qa, settings)\n  self.qa = qa\n  self.settings = settings\n\n  local _, code = api.get(\"/customEvents/\" .. EVENT_NAME)\n  if code == 404 then\n    QuickApp:debug(\"[DailyParticleMeanChecker] Event definition doesn't exist, creating it\")\n    api.post(\"/customEvents\", {\n      name = EVENT_NAME,\n      userDescription = \"Triggered when fine particle (PM2.5) 24-hour mean is exceeded for predefined number of hours (EXCEEDED_HOURS variable in LoookO2 QuickApp)\"\n    })\n  end\n\n  return self\nend\n\nfunction DailyParticleMeanChecker:record(recordDate, value)\n  local exceededHoursThreshold = tonumber(self.qa:getVariable(\"EXCEEDED_HOURS\")) or 12\n  local PM25_DAILY_MEAN = tonumber(self.qa:getVariable(\"PM25_DAILY_MEAN\")) or 25\n\n  local countHoursAboveThreshold = 0\n\n  local hourlyParticleAverages = self.settings:get(\"hourlyParticleAverages\") or {}\n  local lastDayAverages = {}\n\n  local canPersistNewRecord = true\n  for _, average in pairs(hourlyParticleAverages) do\n\n    -- all persisted averages must be older than one hour of new records to make to persist it\n    if (recordDate - average.d) < HOUR then\n      canPersistNewRecord = false\n    end\n\n    -- drop averages older than one day\n    if ((os.time() - average.d) < DAY) then\n      table.insert(lastDayAverages, average)\n\n      if average.v > PM25_DAILY_MEAN then\n        countHoursAboveThreshold = countHoursAboveThreshold + 1\n      end\n    end\n  end\n  if (canPersistNewRecord) then\n    table.insert(lastDayAverages, {d = recordDate, v = value})\n    if value > PM25_DAILY_MEAN then\n      countHoursAboveThreshold = countHoursAboveThreshold + 1\n    end\n  end\n  self.settings:persist(\"hourlyParticleAverages\", lastDayAverages)\n\n  if (countHoursAboveThreshold >= exceededHoursThreshold and self:haveNotTriggeredWithinGivenHours(exceededHoursThreshold)) then\n     self.settings:persist(\"lastEventTriggerAt\", os.time() - 1) -- decreasing to avoid too fast record and missed trigger\n    api.post(\"/customEvents/\" .. EVENT_NAME)\n  end\nend\n\nfunction DailyParticleMeanChecker:haveNotTriggeredWithinGivenHours(hours)\n  return os.time() - self.settings:get(\"lastEventTriggerAt\") > HOUR * hours\nend\n"
+    },
+    {
+      "name": "GUI",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class 'GUI'\n\nfunction GUI:new(qa, i18n)\n    self.qa = qa\n    self.i18n = i18n\n    return self\nend\n\nfunction GUI:load(settings)\n    self.qa:updateView(\"title\", \"text\", self.i18n:get(\"title\"))\n    self.qa:updateView(\"button_refresh\", \"text\", self.i18n:get(\"refresh_data\"))\n    self.qa:updateView(\"find_nearest_device\", \"text\", self.i18n:get(\"find_nearest_device\"))\n    self.qa:updateView(\"version\", \"text\", self.i18n:get(\"version\", \"1.0.0\"))\nend\n"
+    },
+    {
+      "name": "i18n",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class 'i18n'\n\nfunction i18n:new()\n    local lang = api.get(\"/settings/info\").defaultLanguage\n    if not translations[lang] then\n        lang = 'en'\n    end\n    self.translations = translations[lang]\n    self.lang = lang\n    return self\nend\n\nfunction i18n:get(key, ...)\n    if self.translations[key] then\n        return string.format(self.translations[key], ...)\n    end\n    return key\nend\n\nfunction i18n:pickByLang(translations)\n  local pickedTranslation = translations[self.lang]\n  if not pickedTranslation then\n    return translations[\"en\"]\n  end\n  return pickedTranslation\nend\n"
+    },
+    {
+      "name": "SensorResultFactory",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class \"SensorResultFactory\"\n\nlocal icons = {\n  not_available = \"💤\",\n  very_good = \"🔵\",\n  good = \"🟢\",\n  moderate = \"🟡\",\n  satisfactory = \"🟠\",\n  bad = \"🔴\",\n  hazardous = \"🟣\"\n}\nlocal DAY = 24 * 60 * 60\n\nfunction SensorResultFactory:new(i18n)\n  self.i18n = i18n\n  return self\nend\n\nfunction SensorResultFactory:create(response)\n  local result = {\n    readAt = tonumber(response.Epoch),\n    PM25 = tonumber(response.PM25),\n    PM10 = tonumber(response.PM10),\n    PM1 = tonumber(response.PM1),\n    avgPM25 = tonumber(response.AveragePM25),\n    temperature = tonumber(response.Temperature),\n    currentIJP = tonumber(response.IJP),\n    previousIJP = tonumber(response.PreviousIJP),\n    location = {\n      lat = tonumber(response.Lat),\n      long = tonumber(response.Lon),\n    },\n    shortDescription = self.i18n:pickByLang({ pl = response.IJPString, en = response.IJPStringEN}),\n    longDescription = self.i18n:pickByLang({ pl = response.IJPDescription, en = response.IJPDescriptionEN }),\n  }\n\n  result.airQualityIndexIcon = resolveAirQualityIndexIcon(result.currentIJP)\n  result.sensorIssues = discoverSensorsIssues(result)\n\n  return result\nend\n\n\nfunction resolveAirQualityIndexIcon(airQualityIndex)\n  if (airQualityIndex == 0) then\n    pickedIcon = icons.very_good\n  elseif (airQualityIndex <= 2) then\n    pickedIcon = icons.good\n  elseif (airQualityIndex <= 4) then\n    pickedIcon = icons.moderate\n  elseif (airQualityIndex <= 6) then\n    pickedIcon = icons.satisfactory\n  elseif (airQualityIndex <= 9) then\n    pickedIcon = icons.bad\n  else\n    pickedIcon = icons.hazardous\n  end\n  return pickedIcon\nend\n\nfunction discoverSensorsIssues(result)\n  return {\n    dirty = result.PM25 > 30000 or result.PM10 > 30000, -- based on feedback from LookO2 Team\n    offline =  os.time() - result.readAt > DAY,\n    abandoned = result.PM25 == 0 and result.PM10 == 0 and result.PM1 == 0 -- based on feedback from LookO2 Team\n  }\nend\n"
+    },
+    {
+      "name": "Settings",
+      "isMain": false,
+      "isOpen": false,
+      "content": "class 'Settings'\n\nlocal defaultSettings = {\n  nextRefreshAt = os.time(),\n  hourlyParticleAverages = {},\n  lastEventTriggerAt = 0\n}\n\nfunction Settings:new()\n    local settings = api.get('/globalVariables/looko2')\n    self.settings = settings and json.decode(settings.value) or defaultSettings\n\n    if not settings then\n      api.post('/globalVariables', {\n          name = 'looko2',\n          value = json.encode(defaultSettings)\n      })\n    end\n\n    return self\nend\n\nfunction Settings:persist(key, value)\n  self.settings[key] = value\n  local result = api.put('/globalVariables/looko2', {\n      value = json.encode(self.settings)\n  })\nend\n\nfunction Settings:get(key)\n  return self.settings[key] or defaultSettings[key]\nend\n"
+    },
+    {
+      "name": "translations",
+      "isMain": false,
+      "isOpen": false,
+      "content": "translations = {\n  pl = {\n    ['title'] = 'LookO2 - Czujniki Jakości Powietrza',\n    ['refresh_data'] = 'Odśwież dane czujników',\n    ['find_nearest_device'] = 'Znajdź najbliższy czujnik',\n    ['last_collect_summary'] = [[\n      Wybrany czujnik: <font color=\"green\">%s</font> (<font color=\"green\">%.2f km</font> od Twojej lokalizacji).\n      Data pobrania danych z API: <font color=\"green\">%s</font>\n      Data ostatniego odczytu sensora: <font color=\"green\">%s</font>\n\n      Odczyt:\n      - Stężenie PM1: <font color=\"green\">%s ㎍/㎥</font>\n      - Stężenie PM2.5: <font color=\"green\">%s ㎍/㎥ (%.0f%%)</font>\n      - Stężenie PM10: <font color=\"green\">%s ㎍/㎥ (%.0f%%)</font>\n      - Temperatura: <font color=\"green\">%s °C</font>\n      - Stan jakości powietrza: %s\n      - Opis: %s\n    ]],\n    ['sensor_issue_dirty'] = '<font color=\"red\">UWAGA! Wybrany czujnik może nie pokazywać dokładnych danych. Podejrzenie zabrudzenia.</font>',\n    ['sensor_issue_offline'] = '<font color=\"red\">UWAGA! Wybrany czujnik nie pokazuje aktualnych danych. Ostatni odczyt jest starszy niż 1 dzień.</font>',\n    ['sensor_issue_log'] = 'Problem z wybranym sensorem',\n    ['nearest_sensor_summary'] = 'Najbliższe urządzenie to <font color=\"green\">%s</font>, które jest położone <font color=\"green\">%.2f km</font> od ustawionej lokalizacji.',\n    ['version'] = 'Wersja: %s',\n  },\n  en = {\n    ['title'] = 'LookO2 - Air Quality Sensors',\n    ['refresh_data'] = 'Refresh sensors data',\n    ['find_nearest_device'] = 'Find nearest sensor',\n    ['last_collect_summary'] = [[\n      Picked sensor: <font color=\"green\">%s</font> (it's <font color=\"green\">%.2f km</font> from your location).\n      Fetch date from API: <font color=\"green\">%s</font>\n      Last sensor reading date: <font color=\"green\">%s</font>\n\n      Readings:\n      - PM1: <font color=\"green\">%s ㎍/㎥</font>\n      - PM2.5: <font color=\"green\">%s ㎍/㎥ (%.0f%%)</font>\n      - PM10: <font color=\"green\">%s ㎍/㎥ (%.0f%%)</font>\n      - Temperature: <font color=\"green\">%s °C</font>\n      - Air quality rating: %s\n      - Description: %s\n    ]],\n    ['sensor_issue_dirty'] = '<font color=\"red\">ATTENTION! Picked sensor may not present precise data. Looks like it\\'s dirty.</font>',\n    ['sensor_issue_offline'] = '<font color=\"red\">ATTENTION! Picked sensor doesn\\'t present up-to-date data. Last reading is older than one day.</font>',\n    ['sensor_issue_log'] = 'Picked sensor issue',\n    ['nearest_sensor_summary'] = 'The nearest device is <font color=\"green\">%s</font> which is <font color=\"green\">%.2f km</font> from location you\\'ve defined in HC settings.',\n    ['version'] = 'Version: %s',\n  }\n}\n"
+    }
+  ]
+}
