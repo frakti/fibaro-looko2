@@ -19,7 +19,7 @@ function ApiClient:getClosestSensor(lat, long, success, error)
 end
 
 function ApiClient:get(query, success, error)
-    if not self.token == "" then
+    if self.token == "" then
       error("Missing LookO2 API token")
       return
     end
