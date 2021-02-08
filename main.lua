@@ -113,7 +113,10 @@ function QuickApp:reloadDeviceData()
   self.looko2Client:getLastSensorMesurement(
       self:getVariable("DEVICE_ID"),
       function(response)
-          self:debug("[LookO2] Got API response", response)
+          if not response.PM25 then
+            self:error("[LookO2][fetch] Provided DEVICE_ID is wrong and doesn't correspond to any existing LookO2 sensor")
+            return
+          end
 
           self:getChildDevice("PM2.5"):updateValue(tonumber(response.PM25))
           self:getChildDevice("PM10"):updateValue(tonumber(response.PM10))
@@ -167,7 +170,7 @@ function QuickApp:reloadDeviceData()
           self.dailyParticleMeanChecker:record(tonumber(response.Epoch), tonumber(response.AveragePM25))
       end,
       function(message)
-          self:debug("[LookO2][reloadDeviceData] error:", message)
+          self:error("[LookO2][fetch] Couldn't read data from server, cause:", message)
       end
   )
 end

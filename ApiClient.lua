@@ -28,8 +28,10 @@ function ApiClient:get(query, success, error)
             }
         },
         success = function (response)
-            QuickApp:debug(response.status)
-            QuickApp:debug(response.data)
+            if response.data == "Invalid token" then
+              error("Provided LookO2 API token is invalid")
+              return
+            end
             success(json.decode(response.data))
         end,
         error = error
