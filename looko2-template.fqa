@@ -1,0 +1,160 @@
+{
+  "name": "LookO2 - Air Quality Sensor",
+  "type": "com.fibaro.genericDevice",
+  "apiVersion": "1.2",
+  "initialProperties": {
+    "viewLayout": {
+      "$jason": {
+        "body": {
+          "header": {
+            "style": {
+              "height": "0"
+            },
+            "title": "looko2_qa_device_title"
+          },
+          "sections": {
+            "items": [{
+              "components": [{
+                "name": "title",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "LookO2 - Air Quality Sensor",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "button_refresh",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Refresh metrics",
+                "type": "button"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "summary",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "find_nearest_device",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Find nearest device",
+                "type": "button"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "nearest_sensor",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }, {
+              "components": [{
+                "name": "version",
+                "style": {
+                  "weight": "1.2"
+                },
+                "text": "Version: x.x.x",
+                "type": "label"
+              }, {
+                "style": {
+                  "weight": "0.5"
+                },
+                "type": "space"
+              }],
+              "style": {
+                "weight": "1.2"
+              },
+              "type": "vertical"
+            }]
+          }
+        },
+        "head": {
+          "title": "looko2_qa_device_title"
+        }
+      }
+    },
+    "uiCallbacks": [{
+      "callback": "onRefreshClick",
+      "eventType": "onReleased",
+      "name": "button_refresh"
+    }, {
+      "callback": "onFindNearestDevice",
+      "eventType": "onReleased",
+      "name": "find_nearest_device"
+    }],
+    "quickAppVariables": [{
+      "name": "API_TOKEN",
+      "value": ""
+    }, {
+      "name": "DEVICE_ID",
+      "value": "?"
+    }, {
+      "name": "EXCEEDED_HOURS",
+      "value": "12"
+    }, {
+      "name": "PM25_DAILY_MEAN",
+      "value": "25"
+    }, {
+      "name": "PM10_DAILY_MEAN",
+      "value": "50"
+    }],
+    "typeTemplateInitialized": true
+  },
+  "files": []
+}
