@@ -89,7 +89,7 @@ function QuickApp:onFindNearestDevice(event)
     location.latitude, location.longitude,
     function (response)
 
-      local distance = geo_distance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude)
+      local distance = calculateGeoDistance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude)
       self:updateView(
           "nearest_sensor", "text",
           self.i18n:get("nearest_sensor_summary", response.Device, distance)
@@ -149,7 +149,7 @@ function QuickApp:reloadDeviceData()
               self.i18n:get(
                 "last_collect_summary",
                 self:getVariable("DEVICE_ID"),
-                geo_distance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude),
+                calculateGeoDistance(tonumber(response.Lat), tonumber(response.Lon), location.latitude, location.longitude),
                 os.date("%Y-%m-%d %X"),
                 os.date("%Y-%m-%d %X", tonumber(response.Epoch)),
                 tonumber(response.PM1),
@@ -172,7 +172,8 @@ function QuickApp:reloadDeviceData()
   )
 end
 
-function geo_distance(lat1, lon1, lat2, lon2)
+-- Used solution from StackOverflow: https://stackoverflow.com/a/21193869
+function calculateGeoDistance(lat1, lon1, lat2, lon2)
   if lat1 == nil or lon1 == nil or lat2 == nil or lon2 == nil then
     return nil
   end
