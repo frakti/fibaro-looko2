@@ -47,6 +47,6 @@ Additional notes:
 
 ## Development Resources
 - [LookO2 API](https://looko2web.nazwa.pl/aktualnosci/api/)
-- [Fibaro API](https://manuals.fibaro.com/knowledge-base-browse/rest-api/) - can't find HC3 API but apparently API I'm using still works
+- [Fibaro API](https://manuals.fibaro.com/knowledge-base-browse/rest-api/) and Swagger within HC3
 - [HC2 Version](https://marketplace.fibaro.com/items/looko2-air-quality-sensor)
 - [HC3 QuickApps coding - tips and tricks](https://forum.fibaro.com/topic/49113-hc3-quickapps-coding-tips-and-tricks/)
